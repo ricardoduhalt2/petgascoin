@@ -1,0 +1,259 @@
+import { useState, useEffect, useContext } from 'react';
+import { Web3Context } from '../contexts/Web3Context';
+import { shortenAddress } from '../utils/helpers';
+import { toast } from 'react-hot-toast';
+import { ethers } from 'ethers';
+
+const ConnectWallet = () => {
+  const {
+    account = '',
+    isConnected = false,
+    connect = () => {},
+    disconnect = () => {},
+    chainId = '',
+    switchNetwork = () => {},
+    isWrongNetwork = false,
+    provider = null,
+    isLoading = false
+  } = useContext(Web3Context) || {};
+  
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [networkName, setNetworkName] = useState('');
+  const [balance, setBalance] = useState('');
+  const [isSwitchingNetwork, setIsSwitchingNetwork] = useState(false);
+  const [isClient, setIsClient] = useState(false);
+
+  // Format wallet address
+  const formatAddress = (address) => {
+    if (!address) return '';
+    return `${address.substring(0, 6)}...${address.substring(address.length - 4)}`;
+  };
+
+  // Format balance
+  const formatBalance = (balance) => {
+    if (!balance) return '0.00';
+    const num = parseFloat(balance);
+    return isNaN(num) ? '0.00' : num.toFixed(4);
+  };
+
+  // Handle connect wallet
+  const handleConnect = async () => {
+    try {
+      if (!window.ethereum) {
+        window.open('https://metamask.io/download.html', '_blank');
+        toast.error('Please install MetaMask to connect your wallet');
+        return;
+      }
+      
+      const success = await connect();
+      if (success) {
+        toast.success('Wallet connected successfully!');
+      }
+    } catch (error) {
+      console.error('Error connecting wallet:', error);
+      
+      // More specific error messages based on error type
+      let errorMessage = 'Failed to connect wallet';
+      if (error.code === 4001) {
+        errorMessage = 'Please connect your wallet to continue';
+      } else if (error.code === -32002) {
+        errorMessage = 'Please check MetaMask and approve the connection';
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      toast.error(errorMessage);
+    }
+  };
+
+  // Handle disconnect
+  const handleDisconnect = () => {
+    disconnect();
+    setIsMenuOpen(false);
+    toast.success('Wallet disconnected');
+  };
+
+  // Handle network switch
+  const handleSwitchNetwork = async () => {
+    try {
+      setIsSwitchingNetwork(true);
+      await switchNetwork();
+      setIsMenuOpen(false);
+      toast.success('Network switched successfully');
+    } catch (error) {
+      console.error('Error switching network:', error);
+      toast.error(error.message || 'Failed to switch network');
+    } finally {
+      setIsSwitchingNetwork(false);
+    }
+  };
+
+  // Set network name based on chainId
+  useEffect(() => {
+    if (!chainId) return;
+    
+    const chainIdNum = parseInt(chainId, 16);
+    if (chainIdNum === 56 || chainIdNum === 97) {
+      setNetworkName(chainIdNum === 56 ? 'BSC Mainnet' : 'BSC Testnet');
+    } else {
+      setNetworkName('Unsupported Network');
+    }
+  }, [chainId]);
+
+  // Fetch balance when account or provider changes
+  useEffect(() => {
+    const fetchBalance = async () => {
+      if (!provider || !account) return;
+      
+      try {
+        const balance = await provider.getBalance(account);
+        setBalance(ethers.formatEther(balance));
+      } catch (error) {
+        console.error('Error fetching balance:', error);
+      }
+    };
+    
+    if (isConnected && account) {
+      fetchBalance();
+    }
+  }, [provider, account, isConnected]);
+
+  // Set client-side flag
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    if (!isClient) return;
+    
+    const handleClickOutside = (event) => {
+      const menuElement = document.querySelector('.wallet-menu');
+      if (isMenuOpen && menuElement && !menuElement.contains(event.target)) {
+        setIsMenuOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isMenuOpen, isClient]);
+
+  // Loading state (server-side rendering or initializing)
+  if (!isClient || isLoading) {
+    return (
+      <button 
+        className="px-6 py-2.5 bg-gradient-to-r from-yellow-500 to-yellow-600 text-white font-medium rounded-full shadow-md hover:shadow-lg transform transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-opacity-50 flex items-center justify-center space-x-2"
+        disabled
+      >
+        <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        <span>Connecting...</span>
+      </button>
+    );
+  }
+
+  // Connected state
+  if (isConnected) {
+    return (
+      <div className="relative wallet-menu">
+        <button
+          onClick={() => setIsMenuOpen(!isMenuOpen)}
+          className={`flex items-center space-x-2 bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700 text-white font-medium py-2 px-4 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 ${
+            isWrongNetwork ? 'ring-2 ring-red-500' : ''
+          }`}
+        >
+          <span className={`w-2 h-2 rounded-full ${isWrongNetwork ? 'bg-red-500' : 'bg-green-500'}`}></span>
+          <span>{shortenAddress(account)}</span>
+          <svg 
+            className={`w-4 h-4 transition-transform ${isMenuOpen ? 'transform rotate-180' : ''}`} 
+            fill="none" 
+            stroke="currentColor" 
+            viewBox="0 0 24 24" 
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+
+        {isMenuOpen && (
+          <div className="absolute right-0 mt-2 w-64 bg-gray-800 border border-gray-700 rounded-xl shadow-2xl py-2 z-50 overflow-hidden">
+            {/* Network Status */}
+            <div className="px-4 py-3 border-b border-gray-700">
+              <div className="flex items-center justify-between text-sm mb-2">
+                <span className="text-gray-400">Network</span>
+                <div className="flex items-center">
+                  <span className={`h-2 w-2 rounded-full mr-2 ${isWrongNetwork ? 'bg-red-500' : 'bg-green-500'}`}></span>
+                  <span className="text-white">{networkName}</span>
+                </div>
+              </div>
+              {balance && (
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-gray-400">Balance</span>
+                  <span className="text-white">{formatBalance(balance)} BNB</span>
+                </div>
+              )}
+            </div>
+
+            {/* Switch Network Button */}
+            {isWrongNetwork && (
+              <button
+                onClick={handleSwitchNetwork}
+                disabled={isSwitchingNetwork}
+                className="w-full flex items-center justify-between px-4 py-3 text-sm text-yellow-400 hover:bg-gray-700 transition-colors"
+              >
+                <span>Switch to {process.env.NEXT_PUBLIC_IS_TESTNET === 'true' ? 'BSC Testnet' : 'BSC Mainnet'}</span>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                </svg>
+              </button>
+            )}
+
+            {/* Disconnect Button */}
+            <button
+              onClick={handleDisconnect}
+              className="w-full flex items-center justify-between px-4 py-3 text-sm text-red-400 hover:bg-gray-700 transition-colors"
+            >
+              <span>Switch to {process.env.NEXT_PUBLIC_IS_TESTNET === 'true' ? 'BSC Testnet' : 'BSC Mainnet'}</span>
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+              </svg>
+            </button>
+          )}
+
+          {/* Disconnect Button */}
+          <button
+            onClick={handleDisconnect}
+            className="w-full flex items-center justify-between px-4 py-3 text-sm text-red-400 hover:bg-gray-700 transition-colors"
+          >
+            <span>Disconnect</span>
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+            </svg>
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Not connected state
+return (
+  <div className="relative group">
+    <div className="absolute -inset-0.5 bg-gradient-to-r from-yellow-400 to-yellow-600 rounded-full blur opacity-75 group-hover:opacity-100 transition duration-1000 group-hover:duration-200 animate-tilt"></div>
+    <button
+      onClick={handleConnect}
+      disabled={isLoading}
+      className="relative px-6 py-2.5 bg-gradient-to-r from-yellow-500 to-yellow-600 text-white font-medium rounded-full shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-opacity-50 flex items-center space-x-2"
+    >
+      <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path d="M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M12 7V12L15 14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+      <span>Connect Wallet</span>
+    </button>
+  </div>
+);
+
+export default ConnectWallet;

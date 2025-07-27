@@ -1,0 +1,315 @@
+/**
+ * PetGasCoin Animation Styles
+ * 
+ * Estilos de animación específicos para el look & feel de PetGasCoin
+ * incluyendo gradientes dorados animados, efectos de brillo y transiciones.
+ */
+
+/* Keyframe Animations */
+@keyframes shine {
+  0% { background-position: 0% center; }
+  100% { background-position: 200% center; }
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    transform: scale(0.95);
+    opacity: 0.7;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 0.9;
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes ripple {
+  to {
+    transform: scale(4);
+    opacity: 0;
+  }
+}
+
+@keyframes typing {
+  from { width: 0; }
+  to { width: 100%; }
+}
+
+@keyframes blink-caret {
+  from, to { border-color: transparent; }
+  50% { border-color: #FFD700; }
+}
+
+@keyframes gradient-shift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes glow-pulse {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(255, 215, 0, 0.6);
+  }
+}
+
+/* Utility Classes */
+.animate-shine {
+  animation: shine 3s linear infinite;
+}
+
+.animate-blink {
+  animation: blink 0.7s infinite;
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s infinite;
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+.animate-gradient-shift {
+  animation: gradient-shift 3s ease infinite;
+}
+
+.animate-glow-pulse {
+  animation: glow-pulse 2s ease-in-out infinite;
+}
+
+/* PetGas Gradient Text */
+.petgas-gradient-text {
+  background: linear-gradient(90deg, #FFD700, #FFA500, #FFD700);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  background-size: 200% auto;
+}
+
+.petgas-gradient-text.animated {
+  animation: shine 3s linear infinite;
+}
+
+/* PetGas Typing Effect */
+.petgas-typing {
+  background: linear-gradient(90deg, #FFD700, #FFA500, #FFD700);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  background-size: 200% auto;
+  animation: shine 3s linear infinite;
+  white-space: nowrap;
+  overflow: hidden;
+  border-right: 3px solid #FFD700;
+  width: 0;
+  animation: 
+    typing 3.5s steps(40, end) forwards,
+    blink-caret 0.75s step-end 8,
+    shine 3s linear infinite;
+  animation-delay: 0.5s, 0.5s, 0s;
+}
+
+/* PetGas Button Effects */
+.petgas-button {
+  position: relative;
+  background: linear-gradient(90deg, #FFD700, #FFA500, #FFD700);
+  background-size: 200% auto;
+  color: #000;
+  font-weight: bold;
+  border: none;
+  border-radius: 50px;
+  padding: 15px 30px;
+  cursor: pointer;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  box-shadow: 0 5px 15px rgba(255, 215, 0, 0.4);
+}
+
+.petgas-button:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(255, 215, 0, 0.6);
+  animation: gradient-shift 1s ease infinite;
+}
+
+.petgas-button:active {
+  transform: translateY(1px);
+  box-shadow: 0 3px 10px rgba(255, 215, 0, 0.6);
+}
+
+.petgas-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  transition: left 0.5s;
+}
+
+.petgas-button:hover::before {
+  left: 100%;
+}
+
+/* PetGas Card Effects */
+.petgas-card {
+  background: #000;
+  border: 2px solid rgba(255, 215, 0, 0.3);
+  border-radius: 20px;
+  padding: 24px;
+  position: relative;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+}
+
+.petgas-card:hover {
+  border-color: rgba(255, 215, 0, 0.5);
+  box-shadow: 0 10px 30px rgba(255, 215, 0, 0.2);
+}
+
+.petgas-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 20px;
+  background: linear-gradient(90deg, #FFD700, #FFA500, #FFD700);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: -1;
+  padding: 2px;
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+}
+
+.petgas-card:hover::before {
+  opacity: 0.2;
+}
+
+/* Loading Spinner with PetGas Colors */
+.petgas-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(255, 215, 0, 0.3);
+  border-top: 4px solid #FFD700;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Glow Effects */
+.petgas-glow {
+  position: relative;
+}
+
+.petgas-glow::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  background: linear-gradient(90deg, #FFD700, #FFA500, #FFD700);
+  border-radius: inherit;
+  opacity: 0.3;
+  filter: blur(10px);
+  z-index: -1;
+  animation: pulse-glow 2s infinite;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+  .petgas-button {
+    padding: 12px 24px;
+    font-size: 0.9rem;
+  }
+  
+  .petgas-card {
+    padding: 16px;
+    border-radius: 16px;
+  }
+  
+  .petgas-gradient-text {
+    font-size: 1.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .petgas-button {
+    padding: 10px 20px;
+    font-size: 0.8rem;
+  }
+  
+  .petgas-card {
+    padding: 12px;
+    border-radius: 12px;
+  }
+  
+  .petgas-gradient-text {
+    font-size: 1.25rem;
+  }
+}
+
+/* Dark Theme Adjustments */
+@media (prefers-color-scheme: dark) {
+  .petgas-card {
+    background: rgba(0, 0, 0, 0.9);
+    border-color: rgba(255, 215, 0, 0.4);
+  }
+  
+  .petgas-button {
+    box-shadow: 0 5px 15px rgba(255, 215, 0, 0.3);
+  }
+}
+
+/* High Contrast Mode */
+@media (prefers-contrast: high) {
+  .petgas-gradient-text {
+    background: #FFD700;
+    -webkit-background-clip: unset;
+    background-clip: unset;
+    color: #000;
+  }
+  
+  .petgas-card {
+    border-width: 3px;
+    border-color: #FFD700;
+  }
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  .animate-shine,
+  .animate-blink,
+  .animate-pulse-glow,
+  .animate-float,
+  .animate-gradient-shift,
+  .animate-glow-pulse,
+  .petgas-typing {
+    animation: none;
+  }
+  
+  .petgas-button:hover {
+    animation: none;
+  }
+  
+  .petgas-glow::before {
+    animation: none;
+  }
+}

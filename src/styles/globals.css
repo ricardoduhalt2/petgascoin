@@ -1,0 +1,176 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Import PetGasCoin animations */
+@import './petgas-animations.css';
+
+@layer base {
+  :root {
+    /* PetGasCoin color palette */
+    --color-primary: 245 190 11;    /* #f5be0b - Gold */
+    --color-primary-hover: 255 210 51; /* #ffd233 - Lighter Gold */
+    --color-secondary: 28 28 36;    /* #1c1c24 - Dark Gray */
+    --color-accent: 245 190 11;     /* #f5be0b - Gold Accent */
+    --color-background: 0 0 0;      /* #000000 - Black Background */
+    --color-foreground: 255 255 255; /* #ffffff - White Text */
+    --color-muted: 28 28 36;        /* #1c1c24 - Dark Gray */
+    --color-muted-foreground: 148 163 184; /* #94a3b8 - Muted Text */
+    --color-border: 45 45 60;       /* #2d2d3c - Border Color */
+    --color-input: 40 40 53;        /* #282835 - Input Background */
+    --color-ring: 245 190 11;       /* #f5be0b - Focus Ring */
+    --color-success: 0 201 149;     /* #00c995 - Success Green */
+    --color-error: 246 70 93;       /* #f6465d - Error Red */
+    --color-warning: 255 178 55;    /* #ffb237 - Warning Yellow */
+    --radius: 0.5rem;
+  }
+
+  * {
+    scroll-behavior: smooth;
+    box-sizing: border-box;
+  }
+  
+  body {
+    @apply antialiased font-sans;
+    background: #000000;
+    min-height: 100vh;
+    margin: 0;
+    padding: 0;
+    color: #ffffff;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-semibold;
+    color: #ffffff;
+  }
+}
+
+/* PetGasCoin specific styles */
+.petgas-gradient-text {
+  background: linear-gradient(90deg, #FFD700, #FFA500, #FFD700);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  background-size: 200% auto;
+}
+
+.petgas-gradient-text.animated {
+  animation: shine 3s linear infinite;
+}
+
+.typing-text {
+  background: linear-gradient(90deg, #FFD700, #FFA500, #FFD700);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  background-size: 200% auto;
+  animation: shine 3s linear infinite;
+  white-space: nowrap;
+  display: inline-block;
+  vertical-align: bottom;
+}
+
+.typing-cursor {
+  display: inline-block;
+  width: 3px;
+  height: 1em;
+  background: #FFD700;
+  margin-left: 2px;
+  vertical-align: bottom;
+  animation: blink 0.7s infinite;
+  opacity: 0;
+}
+
+/* Animations */
+@keyframes shine {
+  0% { background-position: 0% center; }
+  100% { background-position: 200% center; }
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { 
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to { 
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes shrink {
+  from { width: 100%; }
+  to { width: 0%; }
+}
+
+/* Utility classes */
+.animate-fade-in {
+  animation: fadeIn 0.5s ease-out forwards;
+}
+
+.animate-slide-up {
+  animation: slideUp 0.5s ease-out forwards;
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+.animate-pulse-slow {
+  animation: pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(40, 40, 53, 0.3);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(245, 190, 11, 0.5);
+  border-radius: 4px;
+  transition: background 0.2s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(245, 190, 11, 0.8);
+}
+
+/* Loading spinner */
+.loading-spinner {
+  width: 24px;
+  height: 24px;
+  border: 3px solid rgba(255, 215, 0, 0.3);
+  border-radius: 50%;
+  border-top-color: #FFD700;
+  animation: spin 1s ease-in-out infinite;
+}
