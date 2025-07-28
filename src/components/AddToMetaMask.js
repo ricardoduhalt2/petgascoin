@@ -71,11 +71,11 @@ const AddToMetaMask = () => {
     <button
       onClick={addTokenToMetaMask}
       disabled={isAdded}
-      className={`inline-flex items-center px-4 py-2.5 rounded-lg shadow-md text-sm font-medium transition-colors ${
+      className={`inline-flex items-center px-4 py-2.5 rounded-lg shadow-md text-sm font-medium transition-colors border-2 ${
         isAdded 
-          ? 'bg-green-600 hover:bg-green-700 text-white' 
-          : 'bg-[#f6851b] hover:bg-[#e2761b] text-white hover:text-white'
-      } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#f6851b]`}
+          ? 'bg-green-600 hover:bg-green-700 text-white border-green-700' 
+          : 'bg-yellow-400 hover:bg-yellow-500 text-black border-amber-700 hover:border-amber-800'
+      } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500`}
     >
       {isAdded ? (
         <>
