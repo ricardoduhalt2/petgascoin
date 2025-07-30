@@ -1,0 +1,40 @@
+# Kiro IDE ignore file
+# Files and patterns listed here will be ignored by Kiro IDE autofix
+
+# Configuration files that should not be auto-modified
+src/config.js
+src/config.ts
+src/config/
+src/config/**/*
+next.config.js
+tailwind.config.js
+postcss.config.js
+jest.config.js
+
+# Critical application files
+pages/_app.js
+pages/_document.js
+src/contexts/Web3Context.js
+
+# Environment and package files
+.env*
+package.json
+package-lock.json
+yarn.lock
+
+# Build and dist directories
+dist/
+build/
+.next/
+node_modules/
+
+# Test files
+**/*.test.js
+**/*.test.ts
+**/*.spec.js
+**/*.spec.ts
+
+# Documentation
+README.md
+CHANGELOG.md
+LICENSE

@@ -19,14 +19,15 @@ const nextConfig = {
   images: {
     domains: ['assets.petgascoin.com'],
   },
-  async rewrites() {
-    return [
-      {
-        source: '/',
-        destination: '/index',
-      },
-    ];
-  },
+  // Remove problematic rewrites that cause 404 errors
+  // async rewrites() {
+  //   return [
+  //     {
+  //       source: '/',
+  //       destination: '/index',
+  //     },
+  //   ];
+  // },
 };
 
 module.exports = nextConfig;

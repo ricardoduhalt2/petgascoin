@@ -43,8 +43,8 @@ export const fetchTokenData = async (provider) => {
       pgcContract.balanceOf(BURN_ADDRESS)
     ]);
 
-    // Try to get owner using both getOwner() and owner() for compatibility
-    let owner = null;
+    // This contract doesn't have an owner function, so we'll set it to null
+    const owner = null;
 
     // Format values
     const decimalsNum = Number(decimals);

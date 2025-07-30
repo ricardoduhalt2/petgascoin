@@ -1,133 +1,222 @@
 /**
- * Shortens an Ethereum address for display
- * @param {string} address - The full Ethereum address
- * @param {number} [start=6] - Number of characters to show at the start
- * @param {number} [end=4] - Number of characters to show at the end
- * @returns {string} The shortened address
+ * Helper utilities for formatting and common operations
  */
-export const shortenAddress = (address, start = 6, end = 4) => {
+
+/**
+ * Format numbers for display
+ */
+export const formatNumber = (value, decimals = 4) => {
+  if (!value || isNaN(value)) return '0.00';
+  
+  const num = parseFloat(value);
+  if (num === 0) return '0.00';
+  
+  // For very small numbers
+  if (num < 0.0001) return '< 0.0001';
+  
+  // For large numbers, use compact notation
+  if (num >= 1000000) {
+    return (num / 1000000).toFixed(2) + 'M';
+  }
+  if (num >= 1000) {
+    return (num / 1000).toFixed(2) + 'K';
+  }
+  
+  return num.toFixed(decimals).replace(/\.?0+$/, '');
+};
+
+/**
+ * Shorten address for display
+ */
+export const shortenAddress = (address, startLength = 6, endLength = 4) => {
   if (!address) return '';
-  return `${address.substring(0, start)}...${address.substring(address.length - end)}`;
+  if (address.length <= startLength + endLength) return address;
+  
+  return `${address.substring(0, startLength)}...${address.substring(address.length - endLength)}`;
 };
 
 /**
- * Formats a number to a more readable format
- * @param {number} num - The number to format
- * @param {number} [decimals=2] - Number of decimal places to show
- * @returns {string} Formatted number as string
+ * Format balance with proper decimals
  */
-export const formatNumber = (num, decimals = 2) => {
-  if (num === undefined || num === null) return '0';
+export const formatBalance = (balance, decimals = 18, displayDecimals = 4) => {
+  if (!balance) return '0';
   
-  const number = typeof num === 'string' ? parseFloat(num) : num;
-  
-  if (isNaN(number)) return '0';
-  
-  // For very small numbers, use exponential notation
-  if (Math.abs(number) < 0.000001 && number !== 0) {
-    return number.toExponential(decimals);
+  try {
+    const formatted = parseFloat(balance);
+    if (formatted === 0) return '0';
+    if (formatted < 0.0001) return '< 0.0001';
+    
+    return formatted.toFixed(displayDecimals).replace(/\.?0+$/, '');
+  } catch {
+    return '0';
   }
+};
+
+/**
+ * Check if address is valid
+ */
+export const isValidAddress = (address) => {
+  if (!address) return false;
+  return /^0x[a-fA-F0-9]{40}$/.test(address);
+};
+
+/**
+ * Format currency
+ */
+export const formatCurrency = (amount, currency = 'USD', decimals = 2) => {
+  if (!amount || isNaN(amount)) return `$0.00`;
   
-  // For numbers with more than 4 digits, add commas
-  if (Math.abs(number) >= 1000) {
-    return number.toLocaleString('en-US', {
-      maximumFractionDigits: decimals,
-      minimumFractionDigits: 0
-    });
-  }
-  
-  // For numbers between 0.000001 and 1000
-  return number.toLocaleString('en-US', {
+  const formatter = new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: currency,
+    minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,
-    minimumFractionDigits: 0
   });
+  
+  return formatter.format(amount);
 };
 
 /**
- * Converts wei to ether
- * @param {string|BigNumber} wei - The amount in wei
- * @returns {string} The amount in ether
+ * Debounce function
  */
-export const weiToEther = (wei) => {
-  if (!wei) return '0';
-  try {
-    const ethers = require('ethers');
-    return ethers.utils.formatEther(wei.toString());
-  } catch (error) {
-    console.error('Error converting wei to ether:', error);
-    return '0';
-  }
+export const debounce = (func, wait) => {
+  let timeout;
+  return function executedFunction(...args) {
+    const later = () => {
+      clearTimeout(timeout);
+      func(...args);
+    };
+    clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
+  };
 };
 
 /**
- * Converts ether to wei
- * @param {string|number} ether - The amount in ether
- * @returns {string} The amount in wei
+ * Throttle function
  */
-export const etherToWei = (ether) => {
-  if (!ether) return '0';
-  try {
-    const ethers = require('ethers');
-    return ethers.utils.parseEther(ether.toString()).toString();
-  } catch (error) {
-    console.error('Error converting ether to wei:', error);
-    return '0';
-  }
+export const throttle = (func, limit) => {
+  let inThrottle;
+  return function() {
+    const args = arguments;
+    const context = this;
+    if (!inThrottle) {
+      func.apply(context, args);
+      inThrottle = true;
+      setTimeout(() => inThrottle = false, limit);
+    }
+  };
 };
 
 /**
- * Formats a timestamp to a readable date
- * @param {number} timestamp - The timestamp in seconds
- * @returns {string} Formatted date string
- */
-export const formatDate = (timestamp) => {
-  if (!timestamp) return '';
-  const date = new Date(timestamp * 1000); // Convert to milliseconds
-  return date.toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  });
-};
-
-/**
- * Copies text to clipboard
- * @param {string} text - The text to copy
- * @returns {Promise<boolean>} Whether the copy was successful
+ * Copy to clipboard
  */
 export const copyToClipboard = async (text) => {
-  if (!navigator.clipboard) {
-    // Fallback for older browsers
-    const textArea = document.createElement('textarea');
-    textArea.value = text;
-    document.body.appendChild(textArea);
-    textArea.select();
-    try {
-      document.execCommand('copy');
-      return true;
-    } catch (err) {
-      console.error('Fallback copy failed:', err);
-      return false;
-    } finally {
-      document.body.removeChild(textArea);
-    }
-  }
-  
   try {
-    await navigator.clipboard.writeText(text);
-    return true;
-  } catch (err) {
-    console.error('Failed to copy text:', err);
+    if (navigator.clipboard) {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } else {
+      // Fallback for older browsers
+      const textarea = document.createElement('textarea');
+      textarea.value = text;
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textarea);
+      return true;
+    }
+  } catch (error) {
+    console.error('Failed to copy to clipboard:', error);
     return false;
   }
 };
 
 /**
- * Checks if the current device is mobile
- * @returns {boolean} Whether the current device is mobile
+ * Generate random ID
+ */
+export const generateId = (length = 8) => {
+  return Math.random().toString(36).substring(2, length + 2);
+};
+
+/**
+ * Sleep function
+ */
+export const sleep = (ms) => {
+  return new Promise(resolve => setTimeout(resolve, ms));
+};
+
+/**
+ * Check if value is empty
+ */
+export const isEmpty = (value) => {
+  if (value === null || value === undefined) return true;
+  if (typeof value === 'string') return value.trim() === '';
+  if (Array.isArray(value)) return value.length === 0;
+  if (typeof value === 'object') return Object.keys(value).length === 0;
+  return false;
+};
+
+/**
+ * Capitalize first letter
+ */
+export const capitalize = (str) => {
+  if (!str) return '';
+  return str.charAt(0).toUpperCase() + str.slice(1);
+};
+
+/**
+ * Format date
+ */
+export const formatDate = (date, options = {}) => {
+  const defaultOptions = {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  };
+  
+  return new Date(date).toLocaleDateString('en-US', { ...defaultOptions, ...options });
+};
+
+/**
+ * Calculate percentage
+ */
+export const calculatePercentage = (value, total) => {
+  if (!total || total === 0) return 0;
+  return (value / total) * 100;
+};
+
+/**
+ * Clamp number between min and max
+ */
+export const clamp = (num, min, max) => {
+  return Math.min(Math.max(num, min), max);
+};
+
+/**
+ * Check if device is mobile
  */
 export const isMobile = () => {
-  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  if (typeof window === 'undefined') return false;
+  return window.innerWidth <= 768 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+};
+
+export default {
+  formatNumber,
+  shortenAddress,
+  formatBalance,
+  isValidAddress,
+  formatCurrency,
+  debounce,
+  throttle,
+  copyToClipboard,
+  generateId,
+  sleep,
+  isEmpty,
+  capitalize,
+  formatDate,
+  calculatePercentage,
+  clamp,
+  isMobile
 };

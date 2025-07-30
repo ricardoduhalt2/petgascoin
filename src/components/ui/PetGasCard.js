@@ -1,80 +1,66 @@
 /**
  * PetGasCard Component
  * 
- * Tarjeta con el estilo visual de PetGasCoin - fondo negro con bordes dorados,
- * efectos de brillo y diseño elegante.
+ * Tarjeta con el estilo visual de PetGasCoin - bordes dorados,
+ * fondos degradados y efectos de hover.
  */
 
 const PetGasCard = ({
   children,
-  title = null,
+  variant = 'default', // 'default', 'gradient', 'dark'
   className = '',
-  variant = 'default', // 'default', 'error', 'success', 'warning'
-  glowing = false,
+  hover = true,
   ...props
 }) => {
-  const baseClasses = `
-    relative bg-black border-2 rounded-2xl p-6
-    transition-all duration-300 ease-out
-    backdrop-blur-sm
-  `;
-
-  const variantClasses = {
+  // Variant styles
+  const variantStyles = {
     default: `
-      border-yellow-500/30 
-      hover:border-yellow-400/50
-      shadow-lg shadow-yellow-500/10
-      hover:shadow-xl hover:shadow-yellow-500/20
+      bg-petgas-dark border border-petgas-gold/20
+      shadow-2xl shadow-petgas-gold/10
     `,
-    error: `
-      border-red-500/30
-      hover:border-red-400/50
-      shadow-lg shadow-red-500/10
-      hover:shadow-xl hover:shadow-red-500/20
+    gradient: `
+      bg-gradient-to-br from-petgas-dark via-petgas-gray to-petgas-dark
+      border border-petgas-gold/30
+      shadow-xl shadow-petgas-gold/20
     `,
-    success: `
-      border-green-500/30
-      hover:border-green-400/50
-      shadow-lg shadow-green-500/10
-      hover:shadow-xl hover:shadow-green-500/20
+    dark: `
+      bg-petgas-black border border-petgas-gold/20
+      shadow-2xl shadow-petgas-gold/10
     `,
     warning: `
-      border-orange-500/30
-      hover:border-orange-400/50
-      shadow-lg shadow-orange-500/10
-      hover:shadow-xl hover:shadow-orange-500/20
+      bg-petgas-dark border border-petgas-amber/30
+      shadow-xl shadow-petgas-amber/20
     `
   };
 
-  const glowClasses = glowing ? `
-    before:absolute before:inset-0 before:rounded-2xl
-    before:bg-gradient-to-r before:from-yellow-400/20 before:via-yellow-500/20 before:to-yellow-600/20
-    before:blur-xl before:-z-10
-    before:animate-pulse
+  // Hover effects
+  const hoverStyles = hover ? `
+    hover:shadow-xl hover:shadow-petgas-gold/20
+    hover:border-petgas-gold/40
+    transform hover:-translate-y-1
+    transition-all duration-300 ease-in-out
   ` : '';
 
+  const baseStyles = `
+    rounded-xl p-6
+    backdrop-blur-sm
+    relative overflow-hidden
+  `;
+
+  const cardClasses = `
+    ${baseStyles}
+    ${variantStyles[variant]}
+    ${hoverStyles}
+    ${className}
+  `;
+
   return (
-    <div
-      className={`
-        ${baseClasses}
-        ${variantClasses[variant]}
-        ${glowClasses}
-        ${className}
-      `}
-      {...props}
-    >
-      {/* Animated border gradient */}
-      <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-600 opacity-0 transition-opacity duration-300 hover:opacity-20 -z-10" />
+    <div className={cardClasses} {...props}>
+      {/* Subtle gradient overlay for depth */}
+      <div className="absolute inset-0 bg-gradient-to-br from-petgas-gold/5 via-transparent to-petgas-orange/5 pointer-events-none"></div>
       
-      {title && (
-        <div className="mb-4 pb-4 border-b border-yellow-500/20">
-          <h3 className="text-xl font-bold bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-600 bg-clip-text text-transparent">
-            {title}
-          </h3>
-        </div>
-      )}
-      
-      <div className="relative z-10 text-white">
+      {/* Content */}
+      <div className="relative z-10">
         {children}
       </div>
     </div>

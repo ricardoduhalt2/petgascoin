@@ -1,0 +1,478 @@
+/**
+ * PetGasCoin Design System Foundation
+ * 
+ * Comprehensive design system matching petgascoin.com exactly
+ * Includes color palette, typography, gradients, and animations
+ */
+
+/* Import Poppins font family with all required weights */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@100;200;300;400;500;600;700;800;900&display=swap');
+
+/* ===== CSS CUSTOM PROPERTIES (DESIGN TOKENS) ===== */
+:root {
+  /* === PRIMARY COLOR PALETTE (matching petgascoin.com exactly) === */
+  
+  /* Gold Colors - Primary Brand Colors */
+  --petgas-gold: #FFD700;                    /* Pure Gold */
+  --petgas-gold-light: #FFEA00;              /* Light Gold */
+  --petgas-gold-dark: #B8860B;               /* Dark Gold */
+  --petgas-goldenrod: #DAA520;               /* Goldenrod */
+  --petgas-amber: #FFC107;                   /* Amber */
+  --petgas-orange: #FFA500;                  /* Orange accent */
+  
+  /* Background Colors */
+  --petgas-black: #000000;                   /* Pure Black */
+  --petgas-dark: #1a1a1a;                    /* Dark Gray */
+  --petgas-gray: #333333;                    /* Medium Gray */
+  --petgas-gray-light: #666666;              /* Light Gray */
+  --petgas-gray-lighter: #999999;            /* Lighter Gray */
+  
+  /* Text Colors */
+  --petgas-text-light: #F5DEB3;              /* Wheat */
+  --petgas-text-white: #FFFFFF;              /* Pure White */
+  --petgas-text-muted: #7a7a8c;              /* Muted Text */
+  --petgas-text-gray: #CCCCCC;               /* Gray Text */
+  
+  /* === GRADIENT DEFINITIONS === */
+  
+  /* Primary Gradients */
+  --petgas-gradient-primary: linear-gradient(90deg, #FFD700, #FFA500, #FFD700);
+  --petgas-gradient-secondary: linear-gradient(90deg, #DAA520, #FFC107, #DAA520);
+  --petgas-gradient-button: linear-gradient(90deg, #FFD700, #DAA520, #FFC107, #FFD700);
+  --petgas-gradient-text: linear-gradient(90deg, #FFD700 0%, #FFA500 25%, #FFD700 50%, #FFA500 75%, #FFD700 100%);
+  
+  /* Background Gradients */
+  --petgas-gradient-background: linear-gradient(135deg, #000000 0%, #1a1a1a 100%);
+  --petgas-gradient-card: linear-gradient(135deg, rgba(0,0,0,0.9) 0%, rgba(26,26,26,0.9) 100%);
+  --petgas-gradient-overlay: linear-gradient(180deg, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.4) 100%);
+  
+  /* Radial Gradients */
+  --petgas-gradient-radial: radial-gradient(circle, #FFD700 0%, #FFA500 50%, #DAA520 100%);
+  --petgas-gradient-glow: radial-gradient(circle, rgba(255,215,0,0.3) 0%, transparent 70%);
+  
+  /* === TYPOGRAPHY SYSTEM === */
+  
+  /* Font Families */
+  --petgas-font-primary: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --petgas-font-mono: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+  
+  /* Font Weights */
+  --petgas-font-thin: 100;
+  --petgas-font-extralight: 200;
+  --petgas-font-light: 300;
+  --petgas-font-regular: 400;
+  --petgas-font-medium: 500;
+  --petgas-font-semibold: 600;
+  --petgas-font-bold: 700;
+  --petgas-font-extrabold: 800;
+  --petgas-font-black: 900;
+  
+  /* === RESPONSIVE TYPOGRAPHY SCALE === */
+  
+  /* Mobile First Typography (320px+) */
+  --petgas-text-xs: 0.75rem;      /* 12px */
+  --petgas-text-sm: 0.875rem;     /* 14px */
+  --petgas-text-base: 1rem;       /* 16px */
+  --petgas-text-lg: 1.125rem;     /* 18px */
+  --petgas-text-xl: 1.25rem;      /* 20px */
+  --petgas-text-2xl: 1.5rem;      /* 24px */
+  --petgas-text-3xl: 1.875rem;    /* 30px */
+  --petgas-text-4xl: 2.25rem;     /* 36px */
+  --petgas-text-5xl: 3rem;        /* 48px */
+  --petgas-text-6xl: 3.75rem;     /* 60px */
+  --petgas-text-7xl: 4.5rem;      /* 72px */
+  --petgas-text-8xl: 6rem;        /* 96px */
+  --petgas-text-9xl: 8rem;        /* 128px */
+  
+  /* Line Heights */
+  --petgas-leading-none: 1;
+  --petgas-leading-tight: 1.25;
+  --petgas-leading-snug: 1.375;
+  --petgas-leading-normal: 1.5;
+  --petgas-leading-relaxed: 1.625;
+  --petgas-leading-loose: 2;
+  
+  /* === SPACING SYSTEM === */
+  
+  /* Base spacing unit */
+  --petgas-space-unit: 0.25rem;   /* 4px */
+  
+  /* Spacing Scale */
+  --petgas-space-0: 0;
+  --petgas-space-1: calc(var(--petgas-space-unit) * 1);    /* 4px */
+  --petgas-space-2: calc(var(--petgas-space-unit) * 2);    /* 8px */
+  --petgas-space-3: calc(var(--petgas-space-unit) * 3);    /* 12px */
+  --petgas-space-4: calc(var(--petgas-space-unit) * 4);    /* 16px */
+  --petgas-space-5: calc(var(--petgas-space-unit) * 5);    /* 20px */
+  --petgas-space-6: calc(var(--petgas-space-unit) * 6);    /* 24px */
+  --petgas-space-8: calc(var(--petgas-space-unit) * 8);    /* 32px */
+  --petgas-space-10: calc(var(--petgas-space-unit) * 10);  /* 40px */
+  --petgas-space-12: calc(var(--petgas-space-unit) * 12);  /* 48px */
+  --petgas-space-16: calc(var(--petgas-space-unit) * 16);  /* 64px */
+  --petgas-space-20: calc(var(--petgas-space-unit) * 20);  /* 80px */
+  --petgas-space-24: calc(var(--petgas-space-unit) * 24);  /* 96px */
+  --petgas-space-32: calc(var(--petgas-space-unit) * 32);  /* 128px */
+  
+  /* === BORDER RADIUS === */
+  --petgas-radius-none: 0;
+  --petgas-radius-sm: 0.125rem;    /* 2px */
+  --petgas-radius-base: 0.25rem;   /* 4px */
+  --petgas-radius-md: 0.375rem;    /* 6px */
+  --petgas-radius-lg: 0.5rem;      /* 8px */
+  --petgas-radius-xl: 0.75rem;     /* 12px */
+  --petgas-radius-2xl: 1rem;       /* 16px */
+  --petgas-radius-3xl: 1.5rem;     /* 24px */
+  --petgas-radius-full: 9999px;
+  
+  /* === SHADOWS === */
+  --petgas-shadow-sm: 0 1px 2px 0 rgba(255, 215, 0, 0.05);
+  --petgas-shadow-base: 0 1px 3px 0 rgba(255, 215, 0, 0.1), 0 1px 2px 0 rgba(255, 215, 0, 0.06);
+  --petgas-shadow-md: 0 4px 6px -1px rgba(255, 215, 0, 0.1), 0 2px 4px -1px rgba(255, 215, 0, 0.06);
+  --petgas-shadow-lg: 0 10px 15px -3px rgba(255, 215, 0, 0.1), 0 4px 6px -2px rgba(255, 215, 0, 0.05);
+  --petgas-shadow-xl: 0 20px 25px -5px rgba(255, 215, 0, 0.1), 0 10px 10px -5px rgba(255, 215, 0, 0.04);
+  --petgas-shadow-2xl: 0 25px 50px -12px rgba(255, 215, 0, 0.25);
+  --petgas-shadow-glow: 0 0 20px rgba(255, 215, 0, 0.3);
+  --petgas-shadow-glow-lg: 0 0 40px rgba(255, 215, 0, 0.4);
+  
+  /* === TRANSITIONS === */
+  --petgas-transition-fast: 150ms ease-in-out;
+  --petgas-transition-base: 250ms ease-in-out;
+  --petgas-transition-slow: 350ms ease-in-out;
+  --petgas-transition-slower: 500ms ease-in-out;
+  
+  /* === Z-INDEX SCALE === */
+  --petgas-z-hide: -1;
+  --petgas-z-auto: auto;
+  --petgas-z-base: 0;
+  --petgas-z-docked: 10;
+  --petgas-z-dropdown: 1000;
+  --petgas-z-sticky: 1100;
+  --petgas-z-banner: 1200;
+  --petgas-z-overlay: 1300;
+  --petgas-z-modal: 1400;
+  --petgas-z-popover: 1500;
+  --petgas-z-skipLink: 1600;
+  --petgas-z-toast: 1700;
+  --petgas-z-tooltip: 1800;
+}
+
+/* === RESPONSIVE BREAKPOINTS === */
+
+/* Tablet (768px+) */
+@media (min-width: 48rem) {
+  :root {
+    --petgas-text-xs: 0.75rem;      /* 12px */
+    --petgas-text-sm: 0.875rem;     /* 14px */
+    --petgas-text-base: 1rem;       /* 16px */
+    --petgas-text-lg: 1.125rem;     /* 18px */
+    --petgas-text-xl: 1.25rem;      /* 20px */
+    --petgas-text-2xl: 1.5rem;      /* 24px */
+    --petgas-text-3xl: 2rem;        /* 32px */
+    --petgas-text-4xl: 2.5rem;      /* 40px */
+    --petgas-text-5xl: 3.5rem;      /* 56px */
+    --petgas-text-6xl: 4.5rem;      /* 72px */
+    --petgas-text-7xl: 5.5rem;      /* 88px */
+    --petgas-text-8xl: 7rem;        /* 112px */
+    --petgas-text-9xl: 9rem;        /* 144px */
+  }
+}
+
+/* Desktop (1024px+) */
+@media (min-width: 64rem) {
+  :root {
+    --petgas-text-xs: 0.75rem;      /* 12px */
+    --petgas-text-sm: 0.875rem;     /* 14px */
+    --petgas-text-base: 1rem;       /* 16px */
+    --petgas-text-lg: 1.125rem;     /* 18px */
+    --petgas-text-xl: 1.25rem;      /* 20px */
+    --petgas-text-2xl: 1.5rem;      /* 24px */
+    --petgas-text-3xl: 2.25rem;     /* 36px */
+    --petgas-text-4xl: 3rem;        /* 48px */
+    --petgas-text-5xl: 4rem;        /* 64px */
+    --petgas-text-6xl: 5rem;        /* 80px */
+    --petgas-text-7xl: 6rem;        /* 96px */
+    --petgas-text-8xl: 8rem;        /* 128px */
+    --petgas-text-9xl: 10rem;       /* 160px */
+  }
+}
+
+/* Large Desktop (1280px+) */
+@media (min-width: 80rem) {
+  :root {
+    --petgas-text-3xl: 2.5rem;      /* 40px */
+    --petgas-text-4xl: 3.5rem;      /* 56px */
+    --petgas-text-5xl: 4.5rem;      /* 72px */
+    --petgas-text-6xl: 5.5rem;      /* 88px */
+    --petgas-text-7xl: 6.5rem;      /* 104px */
+    --petgas-text-8xl: 9rem;        /* 144px */
+    --petgas-text-9xl: 12rem;       /* 192px */
+  }
+}
+
+/* === BASE STYLES === */
+
+/* Apply Poppins font family globally */
+* {
+  font-family: var(--petgas-font-primary);
+}
+
+/* Body base styles */
+body {
+  font-family: var(--petgas-font-primary);
+  font-weight: var(--petgas-font-regular);
+  line-height: var(--petgas-leading-normal);
+  color: var(--petgas-text-white);
+  background: var(--petgas-black);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* === TYPOGRAPHY UTILITY CLASSES === */
+
+/* Font Families */
+.petgas-font-primary { font-family: var(--petgas-font-primary); }
+.petgas-font-mono { font-family: var(--petgas-font-mono); }
+
+/* Font Weights */
+.petgas-font-thin { font-weight: var(--petgas-font-thin); }
+.petgas-font-extralight { font-weight: var(--petgas-font-extralight); }
+.petgas-font-light { font-weight: var(--petgas-font-light); }
+.petgas-font-regular { font-weight: var(--petgas-font-regular); }
+.petgas-font-medium { font-weight: var(--petgas-font-medium); }
+.petgas-font-semibold { font-weight: var(--petgas-font-semibold); }
+.petgas-font-bold { font-weight: var(--petgas-font-bold); }
+.petgas-font-extrabold { font-weight: var(--petgas-font-extrabold); }
+.petgas-font-black { font-weight: var(--petgas-font-black); }
+
+/* Font Sizes */
+.petgas-text-xs { font-size: var(--petgas-text-xs); }
+.petgas-text-sm { font-size: var(--petgas-text-sm); }
+.petgas-text-base { font-size: var(--petgas-text-base); }
+.petgas-text-lg { font-size: var(--petgas-text-lg); }
+.petgas-text-xl { font-size: var(--petgas-text-xl); }
+.petgas-text-2xl { font-size: var(--petgas-text-2xl); }
+.petgas-text-3xl { font-size: var(--petgas-text-3xl); }
+.petgas-text-4xl { font-size: var(--petgas-text-4xl); }
+.petgas-text-5xl { font-size: var(--petgas-text-5xl); }
+.petgas-text-6xl { font-size: var(--petgas-text-6xl); }
+.petgas-text-7xl { font-size: var(--petgas-text-7xl); }
+.petgas-text-8xl { font-size: var(--petgas-text-8xl); }
+.petgas-text-9xl { font-size: var(--petgas-text-9xl); }
+
+/* Line Heights */
+.petgas-leading-none { line-height: var(--petgas-leading-none); }
+.petgas-leading-tight { line-height: var(--petgas-leading-tight); }
+.petgas-leading-snug { line-height: var(--petgas-leading-snug); }
+.petgas-leading-normal { line-height: var(--petgas-leading-normal); }
+.petgas-leading-relaxed { line-height: var(--petgas-leading-relaxed); }
+.petgas-leading-loose { line-height: var(--petgas-leading-loose); }
+
+/* === GRADIENT TEXT SYSTEM === */
+
+/* Base gradient text */
+.petgas-gradient-text {
+  background: var(--petgas-gradient-text);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  background-size: 200% auto;
+  display: inline-block;
+}
+
+/* Animated gradient text with golden shine effect */
+.petgas-gradient-text-animated {
+  background: var(--petgas-gradient-text);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  background-size: 200% auto;
+  animation: petgas-shine 3s linear infinite;
+  display: inline-block;
+}
+
+/* Alternative gradient variations */
+.petgas-gradient-text-primary {
+  background: var(--petgas-gradient-primary);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  background-size: 200% auto;
+  display: inline-block;
+}
+
+.petgas-gradient-text-secondary {
+  background: var(--petgas-gradient-secondary);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  background-size: 200% auto;
+  display: inline-block;
+}
+
+/* === KEYFRAME ANIMATIONS === */
+
+/* Golden shine animation for text */
+@keyframes petgas-shine {
+  0% { background-position: 0% center; }
+  100% { background-position: 200% center; }
+}
+
+/* Pulse glow animation */
+@keyframes petgas-pulse-glow {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.02);
+  }
+}
+
+/* Float animation */
+@keyframes petgas-float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+/* Gradient shift animation */
+@keyframes petgas-gradient-shift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* Glow pulse animation */
+@keyframes petgas-glow-pulse {
+  0%, 100% {
+    box-shadow: var(--petgas-shadow-glow);
+  }
+  50% {
+    box-shadow: var(--petgas-shadow-glow-lg);
+  }
+}
+
+/* === ANIMATION UTILITY CLASSES === */
+
+.petgas-animate-shine {
+  animation: petgas-shine 3s linear infinite;
+}
+
+.petgas-animate-pulse-glow {
+  animation: petgas-pulse-glow 2s ease-in-out infinite;
+}
+
+.petgas-animate-float {
+  animation: petgas-float 3s ease-in-out infinite;
+}
+
+.petgas-animate-gradient-shift {
+  animation: petgas-gradient-shift 3s ease infinite;
+}
+
+.petgas-animate-glow-pulse {
+  animation: petgas-glow-pulse 2s ease-in-out infinite;
+}
+
+/* === RESPONSIVE DESIGN UTILITIES === */
+
+/* Mobile-first responsive text sizes */
+.petgas-responsive-text-sm {
+  font-size: var(--petgas-text-sm);
+}
+
+.petgas-responsive-text-base {
+  font-size: var(--petgas-text-base);
+}
+
+.petgas-responsive-text-lg {
+  font-size: var(--petgas-text-lg);
+}
+
+.petgas-responsive-text-xl {
+  font-size: var(--petgas-text-xl);
+}
+
+.petgas-responsive-text-2xl {
+  font-size: var(--petgas-text-2xl);
+}
+
+.petgas-responsive-text-3xl {
+  font-size: var(--petgas-text-3xl);
+}
+
+.petgas-responsive-text-4xl {
+  font-size: var(--petgas-text-4xl);
+}
+
+.petgas-responsive-text-5xl {
+  font-size: var(--petgas-text-5xl);
+}
+
+/* === ACCESSIBILITY FEATURES === */
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .petgas-gradient-text-animated,
+  .petgas-animate-shine,
+  .petgas-animate-pulse-glow,
+  .petgas-animate-float,
+  .petgas-animate-gradient-shift,
+  .petgas-animate-glow-pulse {
+    animation: none;
+  }
+  
+  /* Provide static gradient for reduced motion */
+  .petgas-gradient-text-animated {
+    background: var(--petgas-gold);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .petgas-gradient-text,
+  .petgas-gradient-text-animated,
+  .petgas-gradient-text-primary,
+  .petgas-gradient-text-secondary {
+    background: var(--petgas-gold);
+    -webkit-background-clip: unset;
+    background-clip: unset;
+    color: var(--petgas-gold);
+  }
+}
+
+/* Dark mode adjustments (already optimized for dark) */
+@media (prefers-color-scheme: dark) {
+  :root {
+    /* Enhance gold colors for better dark mode visibility */
+    --petgas-gold: #FFD700;
+    --petgas-gold-light: #FFEA00;
+    --petgas-text-white: #FFFFFF;
+  }
+}
+
+/* === PRINT STYLES === */
+@media print {
+  .petgas-gradient-text,
+  .petgas-gradient-text-animated,
+  .petgas-gradient-text-primary,
+  .petgas-gradient-text-secondary {
+    background: none;
+    -webkit-background-clip: unset;
+    background-clip: unset;
+    color: #000000;
+  }
+  
+  /* Remove animations in print */
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
+}

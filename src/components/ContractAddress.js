@@ -1,21 +1,18 @@
 import React from 'react';
-import { PGC_TOKEN } from '../config';
-import { FaExternalLinkAlt, FaCopy } from 'react-icons/fa';
 import { toast } from 'react-hot-toast';
 
 const ContractAddress = () => {
-  const contractAddress = PGC_TOKEN.mainnet.address;
-  const bscScanUrl = PGC_TOKEN.mainnet.bscScanUrl;
+  const contractAddress = process.env.NEXT_PUBLIC_PGC_TOKEN_CONTRACT || '0x46617e7bca14de818d9E5cFf2aa106b72CB33fe3';
+  const bscScanUrl = `https://bscscan.com/token/${contractAddress}`;
 
-  const copyToClipboard = () => {
-    navigator.clipboard.writeText(contractAddress)
-      .then(() => {
-        toast.success('Contract address copied to clipboard!');
-      })
-      .catch(err => {
-        console.error('Failed to copy:', err);
-        toast.error('Failed to copy address');
-      });
+  const copyToClipboard = async () => {
+    try {
+      await navigator.clipboard.writeText(contractAddress);
+      toast.success('Contract address copied to clipboard!');
+    } catch (err) {
+      console.error('Failed to copy:', err);
+      toast.error('Failed to copy address');
+    }
   };
 
   const formatAddress = (address) => {
@@ -24,70 +21,55 @@ const ContractAddress = () => {
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl shadow p-4">
-      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
-        Contract Information
+    <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
+      <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+        <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
+        PGC Token Contract
       </h3>
       
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
-            Network:
-          </span>
-          <div className="flex items-center
-            bg-blue-100 dark:bg-blue-900/30
-            text-blue-800 dark:text-blue-200
-            px-3 py-1 rounded-full text-sm font-medium">
-            <span className="w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
+      <div className="space-y-4">
+        {/* Network Info */}
+        <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+          <span className="text-sm font-medium text-gray-600">Network:</span>
+          <span className="text-sm font-semibold text-blue-700">
             Binance Smart Chain (BEP-20)
-          </div>
-        </div>
-        
-        <div className="flex items-center justify-between">
-          <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
-            Contract:
           </span>
-          <div className="flex items-center space-x-2">
-            <span className="font-mono text-sm text-gray-900 dark:text-gray-200">
-              {formatAddress(contractAddress)}
+        </div>
+        
+        {/* Contract Address */}
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-gray-600">Contract Address:</label>
+          <div className="flex items-center space-x-2 p-3 bg-gray-50 rounded-lg border">
+            <span className="font-mono text-sm text-gray-800 flex-1">
+              {contractAddress}
             </span>
-            <div className="flex space-x-1">
-              <button
-                onClick={copyToClipboard}
-                className="p-1.5 text-gray-400 hover:text-blue-500 dark:hover:text-blue-400
-                         rounded-full hover:bg-gray-100 dark:hover:bg-gray-700
-                         transition-colors focus:outline-none"
-                aria-label="Copy to clipboard"
-                title="Copy to clipboard"
-              >
-                <FaCopy className="w-4 h-4" />
-              </button>
-              <a
-                href={bscScanUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="p-1.5 text-gray-400 hover:text-blue-500 dark:hover:text-blue-400
-                         rounded-full hover:bg-gray-100 dark:hover:bg-gray-700
-                         transition-colors focus:outline-none"
-                aria-label="View on BscScan"
-                title="View on BscScan"
-              >
-                <FaExternalLinkAlt className="w-4 h-4" />
-              </a>
-            </div>
+            <button
+              onClick={copyToClipboard}
+              className="px-3 py-1 text-xs font-medium text-blue-600 hover:text-blue-800
+                       bg-blue-100 hover:bg-blue-200 rounded-md transition-colors
+                       focus:outline-none focus:ring-2 focus:ring-blue-500"
+              title="Copy to clipboard"
+            >
+              Copy
+            </button>
           </div>
         </div>
         
-        <div className="pt-2 mt-3 border-t border-gray-200 dark:border-gray-700">
+        {/* BSCScan Link */}
+        <div className="pt-3 border-t border-gray-200">
           <a
             href={bscScanUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center text-sm font-medium text-blue-600 hover:text-blue-800
-                     dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
+            className="inline-flex items-center justify-center w-full px-4 py-2
+                     text-sm font-medium text-white bg-yellow-500 hover:bg-yellow-600
+                     rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-yellow-500"
           >
-            View on BscScan
-            <FaExternalLinkAlt className="ml-1.5 w-3 h-3" />
+            View on BSCScan
+            <svg className="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+                    d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+            </svg>
           </a>
         </div>
       </div>

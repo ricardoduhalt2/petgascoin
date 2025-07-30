@@ -1,452 +1,333 @@
 import React from 'react';
 import { render, screen, act } from '@testing-library/react';
-import '@testing-library/jest-dom';
 import { Web3Provider, useWeb3 } from '../Web3Context';
+import { providerDetectionService } from '../../services/providerDetectionService';
+import { connectionManager } from '../../services/connectionManager';
+import { networkManager } from '../../services/networkManager';
 
-// Test component that uses the Web3 context
+// Mock services
+jest.mock('../../services/providerDetectionService');
+jest.mock('../../services/connectionManager');
+jest.mock('../../services/networkManager');
+
+// Mock window.ethereum
+const mockEthereum = {
+  isMetaMask: true,
+  request: jest.fn(),
+  on: jest.fn(),
+  removeListener: jest.fn(),
+  selectedAddress: null,
+  chainId: '0x38'
+};
+
+// Test component to access context
 const TestComponent = () => {
   const {
-    isConnected,
-    isConnecting,
     account,
-    isClient,
-    isHydrated,
-    error,
+    chainId,
+    isConnected,
+    isCorrectNetwork,
+    isWrongNetwork,
     connect,
-    disconnect
+    disconnect,
+    switchToCorrectNetwork,
+    error,
+    isLoading
   } = useWeb3();
 
   return (
     <div>
-      <div data-testid="connection-status">
-        {isConnected ? 'Connected' : 'Disconnected'}
-      </div>
-      <div data-testid="connecting-status">
-        {isConnecting ? 'Connecting' : 'Not Connecting'}
-      </div>
-      <div data-testid="account">{account || 'No Account'}</div>
-      <div data-testid="client-status">
-        {isClient ? 'Client' : 'Server'}
-      </div>
-      <div data-testid="hydration-status">
-        {isHydrated ? 'Hydrated' : 'Not Hydrated'}
-      </div>
-      <div data-testid="error">{error || 'No Error'}</div>
-      <button onClick={connect} data-testid="connect-button">
-        Connect
-      </button>
-      <button onClick={disconnect} data-testid="disconnect-button">
-        Disconnect
-      </button>
+      <div data-testid="account">{account || 'Not connected'}</div>
+      <div data-testid="chainId">{chainId || 'No chain'}</div>
+      <div data-testid="isConnected">{isConnected.toString()}</div>
+      <div data-testid="isCorrectNetwork">{isCorrectNetwork.toString()}</div>
+      <div data-testid="isWrongNetwork">{isWrongNetwork.toString()}</div>
+      <div data-testid="error">{error || 'No error'}</div>
+      <div data-testid="isLoading">{isLoading.toString()}</div>
+      <button onClick={connect} data-testid="connect-button">Connect</button>
+      <button onClick={disconnect} data-testid="disconnect-button">Disconnect</button>
+      <button onClick={switchToCorrectNetwork} data-testid="switch-network-button">Switch Network</button>
     </div>
   );
 };
 
-describe('Web3Context SSR Support', () => {
-  test('should provide safe defaults and not crash', () => {
-    // Test that the context provides safe defaults
-    render(
-      <Web3Provider>
-        <TestComponent />
-      </Web3Provider>
-    );
-
-    // Verify safe defaults are provided
-    expect(screen.getByTestId('connection-status')).toHaveTextContent('Disconnected');
-    expect(screen.getByTestId('connecting-status')).toHaveTextContent('Not Connecting');
-    expect(screen.getByTestId('account')).toHaveTextContent('No Account');
-    expect(screen.getByTestId('error')).toHaveTextContent('No Error');
-  });
-
-  test('should handle client-side rendering without MetaMask', () => {
-    // Mock browser environment without MetaMask
-    const mockWindow = {
-      ethereum: undefined,
-      location: { reload: jest.fn() }
-    };
+describe('Web3Context', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
     
-    // Temporarily replace window for this test
-    const originalWindow = global.window;
-    global.window = mockWindow;
-
-    render(
-      <Web3Provider>
-        <TestComponent />
-      </Web3Provider>
-    );
-
-    // Verify client-side initialization
-    expect(screen.getByTestId('connection-status')).toHaveTextContent('Disconnected');
-    expect(screen.getByTestId('connecting-status')).toHaveTextContent('Not Connecting');
-    expect(screen.getByTestId('account')).toHaveTextContent('No Account');
-    expect(screen.getByTestId('error')).toHaveTextContent('No Error');
-
-    // Restore original window
-    global.window = originalWindow;
-  });
-
-  test('should provide consistent initial state', () => {
-    // Test that multiple renders provide consistent initial state
-    const { container: firstRender } = render(
-      <Web3Provider>
-        <TestComponent />
-      </Web3Provider>
-    );
+    // Reset window.ethereum
+    delete window.ethereum;
     
-    const { container: secondRender } = render(
-      <Web3Provider>
-        <TestComponent />
-      </Web3Provider>
-    );
-
-    // Both renders should have the same initial structure
-    expect(firstRender.innerHTML).toContain('Disconnected');
-    expect(secondRender.innerHTML).toContain('Disconnected');
-    expect(firstRender.innerHTML).toContain('Not Connecting');
-    expect(secondRender.innerHTML).toContain('Not Connecting');
-    expect(firstRender.innerHTML).toContain('No Account');
-    expect(secondRender.innerHTML).toContain('No Account');
+    // Setup default mocks
+    providerDetectionService.detectProvider.mockResolvedValue(mockEthereum);
+    connectionManager.connect.mockResolvedValue({
+      account: '0x1234567890123456789012345678901234567890',
+      chainId: '0x38'
+    });
+    networkManager.getCurrentChainId.mockReturnValue('0x38');
+    networkManager.isCorrectNetwork.mockReturnValue(true);
   });
 
-  test('should handle Web3 context methods safely', async () => {
+  it('should provide initial state', () => {
     render(
       <Web3Provider>
         <TestComponent />
       </Web3Provider>
     );
 
-    // Test that context methods exist and can be called safely
+    expect(screen.getByTestId('account')).toHaveTextContent('Not connected');
+    expect(screen.getByTestId('chainId')).toHaveTextContent('No chain');
+    expect(screen.getByTestId('isConnected')).toHaveTextContent('false');
+    expect(screen.getByTestId('isCorrectNetwork')).toHaveTextContent('false');
+    expect(screen.getByTestId('isWrongNetwork')).toHaveTextContent('false');
+    expect(screen.getByTestId('error')).toHaveTextContent('No error');
+    expect(screen.getByTestId('isLoading')).toHaveTextContent('false');
+  });
+
+  it('should connect to wallet successfully', async () => {
+    window.ethereum = mockEthereum;
+
+    render(
+      <Web3Provider>
+        <TestComponent />
+      </Web3Provider>
+    );
+
     const connectButton = screen.getByTestId('connect-button');
-    const disconnectButton = screen.getByTestId('disconnect-button');
 
-    expect(connectButton).toBeInTheDocument();
-    expect(disconnectButton).toBeInTheDocument();
-
-    // These should not crash when called
     await act(async () => {
       connectButton.click();
     });
 
-    await act(async () => {
-      disconnectButton.click();
-    });
-
-    // Should still show disconnected state (since no real MetaMask)
-    expect(screen.getByTestId('connection-status')).toHaveTextContent('Disconnected');
-  });
-});
-
-describe('Web3Context Automatic State Synchronization', () => {
-  let mockEthereum;
-  let mockProvider;
-  let mockSigner;
-  let mockNetwork;
-
-  beforeEach(() => {
-    // Mock ethereum provider with event capabilities
-    mockEthereum = {
-      request: jest.fn(),
-      on: jest.fn(),
-      removeListener: jest.fn(),
-      isMetaMask: true,
-    };
-
-    // Mock ethers provider
-    mockProvider = {
-      getNetwork: jest.fn(),
-      getSigner: jest.fn(),
-    };
-
-    mockSigner = {
-      getAddress: jest.fn(),
-    };
-
-    mockNetwork = {
-      chainId: 56, // BSC
-      name: 'binance',
-    };
-
-    // Setup default mock responses
-    mockEthereum.request.mockImplementation((params) => {
-      if (params.method === 'eth_accounts') {
-        return Promise.resolve(['0x1234567890123456789012345678901234567890']);
-      }
-      if (params.method === 'eth_chainId') {
-        return Promise.resolve('0x38'); // BSC chain ID in hex
-      }
-      return Promise.resolve([]);
-    });
-
-    mockProvider.getNetwork.mockResolvedValue(mockNetwork);
-    mockProvider.getSigner.mockReturnValue(mockSigner);
-    mockSigner.getAddress.mockResolvedValue('0x1234567890123456789012345678901234567890');
-
-    // Mock window.ethereum
-    global.window = {
-      ethereum: mockEthereum,
-      location: { reload: jest.fn() }
-    };
-
-    // Mock ethers
-    jest.doMock('ethers', () => ({
-      ethers: {
-        providers: {
-          Web3Provider: jest.fn(() => mockProvider),
-        },
-      },
-    }));
+    expect(connectionManager.connect).toHaveBeenCalledWith(mockEthereum);
+    expect(screen.getByTestId('account')).toHaveTextContent('0x1234567890123456789012345678901234567890');
+    expect(screen.getByTestId('chainId')).toHaveTextContent('0x38');
+    expect(screen.getByTestId('isConnected')).toHaveTextContent('true');
+    expect(screen.getByTestId('isCorrectNetwork')).toHaveTextContent('true');
   });
 
-  afterEach(() => {
-    jest.clearAllMocks();
-    jest.resetModules();
-  });
+  it('should handle connection errors', async () => {
+    const errorMessage = 'User rejected connection';
+    connectionManager.connect.mockRejectedValue(new Error(errorMessage));
 
-  test('should handle account changes automatically', async () => {
-    const TestComponentWithSync = () => {
-      const { account, synchronizeState } = useWeb3();
-      
-      return (
-        <div>
-          <div data-testid="account">{account || 'No Account'}</div>
-          <button onClick={synchronizeState} data-testid="sync-button">
-            Sync State
-          </button>
-        </div>
-      );
-    };
+    window.ethereum = mockEthereum;
 
     render(
-      <Web3Provider>
-        <TestComponentWithSync />
-      </Web3Provider>
-    );
-
-    // Initially should show no account
-    expect(screen.getByTestId('account')).toHaveTextContent('No Account');
-
-    // Simulate account change event
-    const accountsChangedCallback = mockEthereum.on.mock.calls.find(
-      call => call[0] === 'accountsChanged'
-    )?.[1];
-
-    if (accountsChangedCallback) {
-      await act(async () => {
-        accountsChangedCallback(['0x9876543210987654321098765432109876543210']);
-      });
-
-      // Should update to new account
-      expect(screen.getByTestId('account')).toHaveTextContent('0x9876543210987654321098765432109876543210');
-    }
-  });
-
-  test('should handle chain changes automatically', async () => {
-    let chainChangedCallback;
-
-    const TestComponentWithChain = () => {
-      const { chainId } = useWeb3();
-      
-      return (
-        <div>
-          <div data-testid="chain-id">{chainId || 'No Chain'}</div>
-        </div>
-      );
-    };
-
-    render(
-      <Web3Provider>
-        <TestComponentWithChain />
-      </Web3Provider>
-    );
-
-    // Find the chain changed callback
-    chainChangedCallback = mockEthereum.on.mock.calls.find(
-      call => call[0] === 'chainChanged'
-    )?.[1];
-
-    if (chainChangedCallback) {
-      await act(async () => {
-        // Simulate chain change to Ethereum mainnet (0x1)
-        chainChangedCallback('0x1');
-      });
-
-      // Should update chain ID
-      expect(screen.getByTestId('chain-id')).toHaveTextContent('1');
-    }
-  });
-
-  test('should handle disconnect events automatically', async () => {
-    const TestComponentWithDisconnect = () => {
-      const { isConnected } = useWeb3();
-      
-      return (
-        <div>
-          <div data-testid="connection-status">
-            {isConnected ? 'Connected' : 'Disconnected'}
-          </div>
-        </div>
-      );
-    };
-
-    render(
-      <Web3Provider>
-        <TestComponentWithDisconnect />
-      </Web3Provider>
-    );
-
-    // Find the disconnect callback
-    const disconnectCallback = mockEthereum.on.mock.calls.find(
-      call => call[0] === 'disconnect'
-    )?.[1];
-
-    if (disconnectCallback) {
-      await act(async () => {
-        // Simulate disconnect event
-        disconnectCallback({ code: 1013 });
-      });
-
-      // Should show disconnected state
-      expect(screen.getByTestId('connection-status')).toHaveTextContent('Disconnected');
-    }
-  });
-
-  test('should synchronize state when accounts become empty', async () => {
-    const TestComponentWithEmptyAccounts = () => {
-      const { isConnected, account } = useWeb3();
-      
-      return (
-        <div>
-          <div data-testid="connection-status">
-            {isConnected ? 'Connected' : 'Disconnected'}
-          </div>
-          <div data-testid="account">{account || 'No Account'}</div>
-        </div>
-      );
-    };
-
-    render(
-      <Web3Provider>
-        <TestComponentWithEmptyAccounts />
-      </Web3Provider>
-    );
-
-    // Find the accounts changed callback
-    const accountsChangedCallback = mockEthereum.on.mock.calls.find(
-      call => call[0] === 'accountsChanged'
-    )?.[1];
-
-    if (accountsChangedCallback) {
-      await act(async () => {
-        // Simulate empty accounts (user disconnected or locked wallet)
-        accountsChangedCallback([]);
-      });
-
-      // Should show disconnected state
-      expect(screen.getByTestId('connection-status')).toHaveTextContent('Disconnected');
-      expect(screen.getByTestId('account')).toHaveTextContent('No Account');
-    }
-  });
-
-  test('should clean up event listeners properly', () => {
-    const { unmount } = render(
       <Web3Provider>
         <TestComponent />
       </Web3Provider>
     );
 
-    // Verify event listeners were set up
-    expect(mockEthereum.on).toHaveBeenCalledWith('accountsChanged', expect.any(Function));
-    expect(mockEthereum.on).toHaveBeenCalledWith('chainChanged', expect.any(Function));
-    expect(mockEthereum.on).toHaveBeenCalledWith('disconnect', expect.any(Function));
-    expect(mockEthereum.on).toHaveBeenCalledWith('connect', expect.any(Function));
+    const connectButton = screen.getByTestId('connect-button');
 
-    // Unmount component
-    unmount();
+    await act(async () => {
+      connectButton.click();
+    });
 
-    // Verify event listeners were cleaned up
-    expect(mockEthereum.removeListener).toHaveBeenCalledWith('accountsChanged', expect.any(Function));
-    expect(mockEthereum.removeListener).toHaveBeenCalledWith('chainChanged', expect.any(Function));
-    expect(mockEthereum.removeListener).toHaveBeenCalledWith('disconnect', expect.any(Function));
-    expect(mockEthereum.removeListener).toHaveBeenCalledWith('connect', expect.any(Function));
+    expect(screen.getByTestId('error')).toHaveTextContent(errorMessage);
+    expect(screen.getByTestId('isConnected')).toHaveTextContent('false');
   });
 
-  test('should provide synchronizeState function for manual sync', async () => {
-    const TestComponentWithManualSync = () => {
-      const { synchronizeState, account } = useWeb3();
-      
-      return (
-        <div>
-          <div data-testid="account">{account || 'No Account'}</div>
-          <button onClick={synchronizeState} data-testid="manual-sync">
-            Manual Sync
-          </button>
-        </div>
-      );
-    };
+  it('should disconnect from wallet', async () => {
+    window.ethereum = mockEthereum;
 
     render(
       <Web3Provider>
-        <TestComponentWithManualSync />
+        <TestComponent />
       </Web3Provider>
     );
 
-    const manualSyncButton = screen.getByTestId('manual-sync');
-    expect(manualSyncButton).toBeInTheDocument();
-
-    // Should be able to call manual sync without errors
+    // First connect
+    const connectButton = screen.getByTestId('connect-button');
     await act(async () => {
-      manualSyncButton.click();
+      connectButton.click();
     });
 
-    // Should not crash and maintain state
-    expect(screen.getByTestId('account')).toBeInTheDocument();
+    expect(screen.getByTestId('isConnected')).toHaveTextContent('true');
+
+    // Then disconnect
+    const disconnectButton = screen.getByTestId('disconnect-button');
+    await act(async () => {
+      disconnectButton.click();
+    });
+
+    expect(screen.getByTestId('account')).toHaveTextContent('Not connected');
+    expect(screen.getByTestId('isConnected')).toHaveTextContent('false');
   });
 
-  test('should handle state inconsistencies during sync', async () => {
-    // Mock inconsistent state where ethereum returns accounts but context shows disconnected
-    mockEthereum.request.mockImplementation((params) => {
-      if (params.method === 'eth_accounts') {
-        return Promise.resolve(['0x1234567890123456789012345678901234567890']);
-      }
-      if (params.method === 'eth_chainId') {
-        return Promise.resolve('0x38');
-      }
-      return Promise.resolve([]);
-    });
+  it('should switch to correct network', async () => {
+    networkManager.switchToCorrectNetwork.mockResolvedValue(true);
 
-    const TestComponentWithInconsistentState = () => {
-      const { isConnected, account, synchronizeState } = useWeb3();
-      
-      return (
-        <div>
-          <div data-testid="connection-status">
-            {isConnected ? 'Connected' : 'Disconnected'}
-          </div>
-          <div data-testid="account">{account || 'No Account'}</div>
-          <button onClick={synchronizeState} data-testid="sync-button">
-            Sync
-          </button>
-        </div>
-      );
-    };
+    window.ethereum = mockEthereum;
 
     render(
       <Web3Provider>
-        <TestComponentWithInconsistentState />
+        <TestComponent />
       </Web3Provider>
     );
 
-    // Initially disconnected
-    expect(screen.getByTestId('connection-status')).toHaveTextContent('Disconnected');
+    const switchButton = screen.getByTestId('switch-network-button');
 
-    // Trigger manual sync
-    const syncButton = screen.getByTestId('sync-button');
     await act(async () => {
-      syncButton.click();
+      switchButton.click();
     });
 
-    // Should detect inconsistency and reconnect
-    // Note: This test verifies the sync function exists and can be called
-    expect(syncButton).toBeInTheDocument();
+    expect(networkManager.switchToCorrectNetwork).toHaveBeenCalledWith(mockEthereum);
+  });
+
+  it('should handle wrong network', async () => {
+    networkManager.isCorrectNetwork.mockReturnValue(false);
+    connectionManager.connect.mockResolvedValue({
+      account: '0x1234567890123456789012345678901234567890',
+      chainId: '0x1' // Ethereum mainnet instead of BSC
+    });
+
+    window.ethereum = mockEthereum;
+
+    render(
+      <Web3Provider>
+        <TestComponent />
+      </Web3Provider>
+    );
+
+    const connectButton = screen.getByTestId('connect-button');
+
+    await act(async () => {
+      connectButton.click();
+    });
+
+    expect(screen.getByTestId('isCorrectNetwork')).toHaveTextContent('false');
+    expect(screen.getByTestId('isWrongNetwork')).toHaveTextContent('true');
+  });
+
+  it('should handle provider not available', async () => {
+    providerDetectionService.detectProvider.mockResolvedValue(null);
+
+    render(
+      <Web3Provider>
+        <TestComponent />
+      </Web3Provider>
+    );
+
+    const connectButton = screen.getByTestId('connect-button');
+
+    await act(async () => {
+      connectButton.click();
+    });
+
+    expect(screen.getByTestId('error')).toHaveTextContent('MetaMask not detected');
+  });
+
+  it('should auto-reconnect on page load', async () => {
+    // Mock that user was previously connected
+    mockEthereum.selectedAddress = '0x1234567890123456789012345678901234567890';
+    window.ethereum = mockEthereum;
+
+    connectionManager.isConnected.mockReturnValue(true);
+    connectionManager.getAccount.mockReturnValue('0x1234567890123456789012345678901234567890');
+
+    render(
+      <Web3Provider>
+        <TestComponent />
+      </Web3Provider>
+    );
+
+    // Wait for auto-reconnection
+    await act(async () => {
+      await new Promise(resolve => setTimeout(resolve, 0));
+    });
+
+    expect(screen.getByTestId('account')).toHaveTextContent('0x1234567890123456789012345678901234567890');
+    expect(screen.getByTestId('isConnected')).toHaveTextContent('true');
+  });
+
+  it('should handle account changes', async () => {
+    window.ethereum = mockEthereum;
+
+    render(
+      <Web3Provider>
+        <TestComponent />
+      </Web3Provider>
+    );
+
+    // First connect
+    const connectButton = screen.getByTestId('connect-button');
+    await act(async () => {
+      connectButton.click();
+    });
+
+    // Simulate account change
+    const newAccount = '0x9876543210987654321098765432109876543210';
+    const accountChangeHandler = mockEthereum.on.mock.calls.find(
+      call => call[0] === 'accountsChanged'
+    )[1];
+
+    await act(async () => {
+      accountChangeHandler([newAccount]);
+    });
+
+    expect(screen.getByTestId('account')).toHaveTextContent(newAccount);
+  });
+
+  it('should handle chain changes', async () => {
+    window.ethereum = mockEthereum;
+
+    render(
+      <Web3Provider>
+        <TestComponent />
+      </Web3Provider>
+    );
+
+    // First connect
+    const connectButton = screen.getByTestId('connect-button');
+    await act(async () => {
+      connectButton.click();
+    });
+
+    // Simulate chain change
+    const newChainId = '0x1'; // Ethereum mainnet
+    const chainChangeHandler = mockEthereum.on.mock.calls.find(
+      call => call[0] === 'chainChanged'
+    )[1];
+
+    networkManager.isCorrectNetwork.mockReturnValue(false);
+
+    await act(async () => {
+      chainChangeHandler(newChainId);
+    });
+
+    expect(screen.getByTestId('chainId')).toHaveTextContent(newChainId);
+    expect(screen.getByTestId('isCorrectNetwork')).toHaveTextContent('false');
+    expect(screen.getByTestId('isWrongNetwork')).toHaveTextContent('true');
+  });
+
+  it('should handle disconnect events', async () => {
+    window.ethereum = mockEthereum;
+
+    render(
+      <Web3Provider>
+        <TestComponent />
+      </Web3Provider>
+    );
+
+    // First connect
+    const connectButton = screen.getByTestId('connect-button');
+    await act(async () => {
+      connectButton.click();
+    });
+
+    expect(screen.getByTestId('isConnected')).toHaveTextContent('true');
+
+    // Simulate disconnect event
+    const disconnectHandler = mockEthereum.on.mock.calls.find(
+      call => call[0] === 'disconnect'
+    )[1];
+
+    await act(async () => {
+      disconnectHandler();
+    });
+
+    expect(screen.getByTestId('account')).toHaveTextContent('Not connected');
+    expect(screen.getByTestId('isConnected')).toHaveTextContent('false');
   });
 });

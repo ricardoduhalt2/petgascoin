@@ -4,7 +4,7 @@
 
 // Token information
 const TOKEN_INFO = {
-  address: process.env.NEXT_PUBLIC_PGC_TOKEN_CONTRACT || '0xYOUR_DEFAULT_CONTRACT_ADDRESS',
+  address: process.env.NEXT_PUBLIC_PGC_TOKEN_CONTRACT || '0x46617e7bca14de818d9E5cFf2aa106b72CB33fe3',
   symbol: 'PGC',
   decimals: 18,
   image: 'https://petgascoin.com/media/LogoPetgasCoinTransparent.png',

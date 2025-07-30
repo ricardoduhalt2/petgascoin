@@ -2,6 +2,9 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Import PetGasCoin Design System Foundation */
+@import './petgas-design-system.css';
+
 /* Import PetGasCoin animations */
 @import './petgas-animations.css';
 

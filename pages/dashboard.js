@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/router';
 import { useWeb3 } from '../src/contexts/Web3Context';
+import { useTokenData } from '../src/hooks/useTokenData';
 import Head from 'next/head';
 import WalletCard from '../src/components/WalletCard';
 import TokenInfo from '../src/components/TokenInfo';
@@ -8,34 +10,121 @@ import Chart from '../src/components/Chart';
 import ContractAddress from '../src/components/ContractAddress';
 import PetGasCard from '../src/components/ui/PetGasCard';
 import PetGasText from '../src/components/ui/PetGasText';
+import { toast } from 'react-hot-toast';
 
 const Dashboard = () => {
-  const { isConnected, account, chainId, isWrongNetwork } = useWeb3();
+  const router = useRouter();
+  const { isConnected, account, chainId, isWrongNetwork, isCorrectNetwork } = useWeb3();
   const [isClient, setIsClient] = useState(false);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+  
+  // Use token data hook to fetch real data
+  const {
+    tokenData,
+    tokenInfo,
+    priceData,
+    userBalanceFormatted,
+    hasUserBalance,
+    isLoading: tokenDataLoading,
+    error: tokenDataError,
+    refreshTokenData,
+    lastUpdated
+  } = useTokenData({
+    autoRefresh: true,
+    refreshInterval: 30000, // 30 seconds
+    includeUserBalance: isConnected && isCorrectNetwork,
+    includeTransfers: true,
+    includeHolders: true
+  });
 
   // Ensure we're on the client side before rendering Web3 components
   useEffect(() => {
     setIsClient(true);
   }, []);
 
-  // Token information
-  const tokenInfo = {
+  // Route protection: redirect to home if not connected
+  useEffect(() => {
+    if (isClient) {
+      // Give some time for Web3 context to initialize
+      const timer = setTimeout(() => {
+        if (!isConnected) {
+          toast.error('Please connect your wallet to access the dashboard', { duration: 4000 });
+          router.push('/');
+        } else {
+          setIsCheckingAuth(false);
+        }
+      }, 1000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [isClient, isConnected, router]);
+
+  // Update auth checking state when connection changes
+  useEffect(() => {
+    if (isClient && isConnected) {
+      setIsCheckingAuth(false);
+    }
+  }, [isClient, isConnected]);
+
+  // Show toast when token data updates
+  useEffect(() => {
+    if (lastUpdated && !tokenDataLoading && !tokenDataError) {
+      toast.success('Token data updated', { duration: 2000 });
+    }
+  }, [lastUpdated, tokenDataLoading, tokenDataError]);
+
+  // Show error toast if token data fails to load
+  useEffect(() => {
+    if (tokenDataError) {
+      toast.error(`Failed to load token data: ${tokenDataError}`, { duration: 5000 });
+    }
+  }, [tokenDataError]);
+
+  // Fallback token information
+  const fallbackTokenInfo = {
     name: 'Petgascoin',
     symbol: 'PGC',
-    contractAddress: process.env.NEXT_PUBLIC_PGC_TOKEN_CONTRACT,
+    contractAddress: process.env.NEXT_PUBLIC_PGC_TOKEN_CONTRACT || '0x46617e7bca14de818d9E5cFf2aa106b72CB33fe3',
     decimals: 18,
     logoURI: 'https://bscscan.com/token/images/petgas_32.png?v=2',
-    bscScanUrl: `https://bscscan.com/token/${process.env.NEXT_PUBLIC_PGC_TOKEN_CONTRACT}`
+    bscScanUrl: `https://bscscan.com/token/${process.env.NEXT_PUBLIC_PGC_TOKEN_CONTRACT || '0x46617e7bca14de818d9E5cFf2aa106b72CB33fe3'}`
   };
 
-  if (!isClient) {
-    return <div className="min-h-screen bg-black flex items-center justify-center">
-      <div className="loading-spinner"></div>
-    </div>;
+  // Use real token info if available, otherwise fallback
+  const displayTokenInfo = tokenInfo && Object.keys(tokenInfo).length > 0 ? {
+    ...fallbackTokenInfo,
+    ...tokenInfo,
+    bscScanUrl: tokenInfo.bscScanUrl || fallbackTokenInfo.bscScanUrl
+  } : fallbackTokenInfo;
+
+  // Show loading screen while checking client-side or authentication
+  if (!isClient || isCheckingAuth) {
+    return (
+      <div className="min-h-screen bg-petgas-black flex items-center justify-center">
+        <div className="text-center">
+          <div className="loading-spinner mb-4"></div>
+          <p className="text-petgas-text-gray petgas-text-lg">
+            {!isClient ? 'Loading...' : 'Checking wallet connection...'}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // If not connected, this will be handled by the useEffect redirect
+  if (!isConnected) {
+    return (
+      <div className="min-h-screen bg-petgas-black flex items-center justify-center">
+        <div className="text-center">
+          <div className="loading-spinner mb-4"></div>
+          <p className="text-petgas-text-gray petgas-text-lg">Redirecting...</p>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="min-h-screen bg-black">
+    <div className="min-h-screen bg-petgas-black">
       <Head>
         <title>Petgascoin Dashboard</title>
         <meta name="description" content="Petgascoin Dashboard - Track your PGC tokens" />
@@ -50,7 +139,7 @@ const Dashboard = () => {
               <PetGasText variant="gradient" size="3xl" className="mb-2">
                 PetgasCoin Dashboard
               </PetGasText>
-              <p className="text-gray-400">
+              <p className="text-petgas-text-gray">
                 Track and manage your PGC tokens on Binance Smart Chain
               </p>
             </div>
@@ -82,17 +171,17 @@ const Dashboard = () => {
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-6">
               <div className="flex items-center mb-4 lg:mb-0">
                 <img 
-                  src={tokenInfo.logoURI} 
-                  alt={`${tokenInfo.name} logo`} 
+                  src={displayTokenInfo.logoURI} 
+                  alt={`${displayTokenInfo.name} logo`} 
                   className="h-16 w-16 rounded-full mr-6 border-2 border-yellow-500/30"
                 />
                 <div>
                   <PetGasText variant="gradient" size="2xl" className="mb-1">
-                    {tokenInfo.name} ({tokenInfo.symbol})
+                    {displayTokenInfo.name} ({displayTokenInfo.symbol})
                   </PetGasText>
-                  <div className="flex items-center">
+                  <div className="flex items-center space-x-4">
                     <a 
-                      href={tokenInfo.bscScanUrl} 
+                      href={displayTokenInfo.bscScanUrl} 
                       target="_blank" 
                       rel="noopener noreferrer"
                       className="text-sm text-yellow-400 hover:text-yellow-300 transition-colors flex items-center"
@@ -102,14 +191,59 @@ const Dashboard = () => {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                       </svg>
                     </a>
+                    {tokenDataLoading && (
+                      <div className="flex items-center text-xs text-gray-400">
+                        <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-yellow-400 mr-1"></div>
+                        Updating...
+                      </div>
+                    )}
+                    {lastUpdated && !tokenDataLoading && (
+                      <div className="text-xs text-gray-400">
+                        Updated: {lastUpdated.toLocaleTimeString()}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
-              <div className="flex-shrink-0">
-                <AddToMetaMask tokenInfo={tokenInfo} />
+              <div className="flex-shrink-0 flex items-center space-x-3">
+                <button
+                  onClick={refreshTokenData}
+                  disabled={tokenDataLoading}
+                  className="px-3 py-1 text-xs bg-gray-700 hover:bg-gray-600 text-white rounded-md transition-colors disabled:opacity-50"
+                  title="Refresh token data"
+                >
+                  {tokenDataLoading ? 'Refreshing...' : 'Refresh'}
+                </button>
+                <AddToMetaMask tokenInfo={displayTokenInfo} />
               </div>
             </div>
-            <TokenInfo />
+            
+            {/* Real-time token stats */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+              <div className="bg-petgas-gray/50 rounded-lg p-4 border border-petgas-gold/20">
+                <div className="text-sm text-petgas-text-gray mb-1">Total Supply</div>
+                <div className="text-xl font-bold text-petgas-text-white">
+                  {tokenInfo?.totalSupply ? 
+                    `${parseFloat(tokenInfo.totalSupply).toLocaleString()} ${displayTokenInfo.symbol}` : 
+                    tokenDataLoading ? 'Loading...' : '330,000,000,000 PGC'
+                  }
+                </div>
+              </div>
+              <div className="bg-petgas-gray/50 rounded-lg p-4 border border-petgas-gold/20">
+                <div className="text-sm text-petgas-text-gray mb-1">Contract</div>
+                <div className="text-sm font-mono text-petgas-text-white break-all">
+                  {displayTokenInfo.contractAddress}
+                </div>
+              </div>
+              <div className="bg-petgas-gray/50 rounded-lg p-4 border border-petgas-gold/20">
+                <div className="text-sm text-petgas-text-gray mb-1">Decimals</div>
+                <div className="text-xl font-bold text-petgas-text-white">
+                  {tokenInfo?.decimals || displayTokenInfo.decimals}
+                </div>
+              </div>
+            </div>
+            
+            <TokenInfo tokenData={tokenData} />
           </PetGasCard>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -127,30 +261,42 @@ const Dashboard = () => {
                 {isConnected ? (
                   <div className="space-y-4">
                     <div className="flex justify-between items-center">
-                      <span className="text-sm font-medium text-gray-400">Connected Wallet</span>
-                      <span className="text-sm font-medium text-white font-mono">
+                      <span className="text-sm font-medium text-petgas-text-gray">Connected Wallet</span>
+                      <span className="text-sm font-medium text-petgas-text-white font-mono">
                         {`${account.substring(0, 6)}...${account.substring(38)}`}
                       </span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-sm font-medium text-gray-400">Network</span>
+                      <span className="text-sm font-medium text-petgas-text-gray">Network</span>
                       <span className={`text-sm font-medium ${chainId === '0x38' ? 'text-green-400' : 'text-red-400'}`}>
                         {chainId === '0x38' ? 'BSC Mainnet' : 'Unsupported Network'}
                       </span>
                     </div>
-                    <div className="pt-4 border-t border-yellow-500/20">
-                      <h4 className="text-sm font-medium text-gray-400 mb-3">Your PGC Balance</h4>
-                      <div className="flex items-center">
-                        <img 
-                          src={tokenInfo.logoURI} 
-                          alt={tokenInfo.symbol} 
-                          className="h-8 w-8 mr-3 rounded-full border border-yellow-500/30"
-                        />
-                        <div>
-                          <span className="text-2xl font-bold text-white">0.00</span>
-                          <span className="ml-2 text-yellow-400 font-semibold">PGC</span>
+                    <div className="pt-4 border-t border-petgas-gold/20">
+                      <h4 className="text-sm font-medium text-petgas-text-gray mb-3">Your PGC Balance</h4>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center">
+                          <img 
+                            src={displayTokenInfo.logoURI} 
+                            alt={displayTokenInfo.symbol} 
+                            className="h-8 w-8 mr-3 rounded-full border border-yellow-500/30"
+                          />
+                          <div>
+                            <span className="text-2xl font-bold text-petgas-text-white">
+                              {hasUserBalance ? parseFloat(userBalanceFormatted).toLocaleString() : '0.00'}
+                            </span>
+                            <span className="ml-2 text-petgas-gold font-semibold">{displayTokenInfo.symbol}</span>
+                          </div>
                         </div>
+                        {tokenDataLoading && (
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-yellow-400"></div>
+                        )}
                       </div>
+                      {!isCorrectNetwork && (
+                        <p className="text-xs text-red-400 mt-2">
+                          Switch to BSC Mainnet to view balance
+                        </p>
+                      )}
                     </div>
                   </div>
                 ) : (
@@ -158,7 +304,7 @@ const Dashboard = () => {
                     <svg className="w-16 h-16 mx-auto mb-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M13 10V3L4 14h7v7l9-11h-7z" />
                     </svg>
-                    <p className="text-gray-400 mb-4">Connect your wallet to view balance</p>
+                    <p className="text-petgas-text-gray mb-4">Connect your wallet to view balance</p>
                     <WalletCard />
                   </div>
                 )}
@@ -171,7 +317,7 @@ const Dashboard = () => {
 
               {/* About Card */}
               <PetGasCard title="About PGC">
-                <p className="text-gray-300 mb-6 leading-relaxed">
+                <p className="text-petgas-text-light mb-6 leading-relaxed">
                   Petgascoin (PGC) is a BEP-20 utility token on the Binance Smart Chain, 
                   designed for the Petgas ecosystem.
                 </p>
@@ -206,8 +352,8 @@ const Dashboard = () => {
       </main>
       
       {/* Footer */}
-      <footer className="mt-12 py-6 border-t border-yellow-500/20">
-        <div className="container mx-auto px-4 text-center text-sm text-gray-400">
+      <footer className="mt-12 py-6 border-t border-petgas-gold/20">
+        <div className="container mx-auto px-4 text-center text-sm text-petgas-text-gray">
           <p>© {new Date().getFullYear()} Petgascoin. All rights reserved.</p>
           <p className="mt-1 text-xs">
             This interface is open source. Verify the code on{' '}
@@ -215,7 +361,7 @@ const Dashboard = () => {
               href="https://github.com/petgas/pgc-dashboard" 
               target="_blank" 
               rel="noopener noreferrer"
-              className="text-yellow-400 hover:text-yellow-300 transition-colors"
+              className="text-petgas-gold hover:text-petgas-gold-light transition-colors"
             >
               GitHub
             </a>.

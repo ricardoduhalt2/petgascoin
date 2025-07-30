@@ -6,7 +6,7 @@
  * automatically switch to BSC, and add missing networks to user's wallet.
  */
 
-import { NETWORKS } from '../config';
+import { NETWORKS } from '../config.js';
 import { errorHandler, ERROR_TYPES } from './errorHandler';
 
 /**

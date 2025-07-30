@@ -2,7 +2,7 @@ import Head from 'next/head';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
-import ConnectWallet from './ConnectWallet';
+import ConnectWalletEnhanced from './ConnectWalletEnhanced';
 import { isMobile } from '../utils/helpers';
 
 export default function Layout({ children }) {
@@ -92,13 +92,13 @@ export default function Layout({ children }) {
                 </Link>
               ))}
               <div className="ml-4">
-                <ConnectWallet />
+                <ConnectWalletEnhanced />
               </div>
             </nav>
 
             {/* Mobile menu button */}
             <div className="flex md:hidden items-center">
-              <ConnectWallet />
+              <ConnectWalletEnhanced />
               <button
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
                 className="ml-4 inline-flex items-center justify-center p-2 rounded-md text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white focus:outline-none"

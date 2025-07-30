@@ -1,19 +1,34 @@
 /**
  * PetGasText Component
  * 
- * Componente de texto con efectos de gradiente dorado animado,
- * similar al estilo de los títulos en PetGasCoin.
+ * Componente de texto con estilos de PetGasCoin - gradientes dorados,
+ * diferentes variantes y tamaños.
  */
 
 const PetGasText = ({
   children,
-  variant = 'gradient', // 'gradient', 'typing', 'shine'
-  size = 'base', // 'sm', 'base', 'lg', 'xl', '2xl', '3xl'
+  variant = 'default', // 'default', 'gradient', 'accent', 'muted'
+  size = 'base', // 'xs', 'sm', 'base', 'lg', 'xl', '2xl', '3xl'
+  weight = 'normal', // 'light', 'normal', 'medium', 'semibold', 'bold'
   className = '',
-  animated = true,
+  as: Component = 'span',
   ...props
 }) => {
-  const sizeClasses = {
+  // Variant styles
+  const variantStyles = {
+    default: 'text-gray-900 dark:text-white',
+    gradient: `
+      bg-gradient-to-r from-yellow-400 via-yellow-500 to-orange-500
+      bg-clip-text text-transparent
+      font-semibold
+    `,
+    accent: 'text-yellow-600 dark:text-yellow-400',
+    muted: 'text-gray-600 dark:text-gray-400'
+  };
+
+  // Size styles
+  const sizeStyles = {
+    xs: 'text-xs',
     sm: 'text-sm',
     base: 'text-base',
     lg: 'text-lg',
@@ -22,23 +37,26 @@ const PetGasText = ({
     '3xl': 'text-3xl'
   };
 
-  const baseGradientClasses = animated 
-    ? 'petgas-gradient-text animated' 
-    : 'petgas-gradient-text';
-
-  const variantClasses = {
-    gradient: `${baseGradientClasses} bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-600 bg-clip-text text-transparent font-bold`,
-    typing: `typing-text`,
-    shine: `${baseGradientClasses} bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-600 bg-clip-text text-transparent font-bold relative`
+  // Weight styles
+  const weightStyles = {
+    light: 'font-light',
+    normal: 'font-normal',
+    medium: 'font-medium',
+    semibold: 'font-semibold',
+    bold: 'font-bold'
   };
 
+  const textClasses = `
+    ${variantStyles[variant]}
+    ${sizeStyles[size]}
+    ${weightStyles[weight]}
+    ${className}
+  `;
+
   return (
-    <span
-      className={`${sizeClasses[size]} ${variantClasses[variant]} ${className}`.trim()}
-      {...props}
-    >
+    <Component className={textClasses} {...props}>
       {children}
-    </span>
+    </Component>
   );
 };
 

@@ -6,7 +6,7 @@ export default function Document() {
       <Head>
         <link rel="icon" href="https://petgascoin.com/media/LogoPetgasCoinTransparent.png" type="image/png" />
         <link
-          href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Poppins:wght@100;200;300;400;500;600;700;800;900&display=swap"
           rel="stylesheet"
         />
         <meta name="description" content="PetgasCoin - Transforming Waste into Clean Energy" />

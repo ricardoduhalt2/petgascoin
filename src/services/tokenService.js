@@ -1,51 +1,30 @@
-import { PGC_TOKEN, API_ENDPOINTS } from '../config';
+/**
+ * Token Service
+ * 
+ * Service for fetching token data from various APIs
+ */
 
-// Helper function to handle API requests
-const fetchWithErrorHandling = async (url, options = {}) => {
-  try {
-    const response = await fetch(url, {
-      ...options,
-      headers: {
-        'Content-Type': 'application/json',
-        ...options.headers,
-      },
-    });
+import { ethers } from 'ethers';
+import { ERC20_ABI } from '../config';
 
-    if (!response.ok) {
-      throw new Error(`API request failed with status ${response.status}`);
-    }
+const PGC_CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_PGC_TOKEN_CONTRACT || '0x46617e7bca14de818d9E5cFf2aa106b72CB33fe3';
+const BSCSCAN_API_KEY = process.env.NEXT_PUBLIC_BSCSCAN_API_KEY;
+const BSC_RPC_URL = process.env.NEXT_PUBLIC_BSC_MAINNET_RPC_URL || 'https://bsc-dataseed.binance.org/';
 
-    return await response.json();
-  } catch (error) {
-    console.error('API request error:', error);
-    throw error;
-  }
-};
+// Create provider
+const provider = new ethers.providers.JsonRpcProvider(BSC_RPC_URL);
 
-// Get PGC token price data
+/**
+ * Get token price data
+ */
 export const getTokenPrice = async () => {
   try {
-    const data = await fetchWithErrorHandling(
-      API_ENDPOINTS.getTokenPrice(PGC_TOKEN.mainnet.address)
-    );
-    
-    // Handle different API response formats
-    if (data.data) {
-      // Handle PancakeSwap API format
-      return {
-        price: data.data.price,
-        priceChange24h: data.data.price_BNB,
-        volume24h: data.data.volume_24h,
-        marketCap: data.data.market_cap,
-      };
-    }
-    
-    // Fallback to direct properties if data structure is different
+    // For now, return mock data since we don't have a price API configured
     return {
-      price: data.price || '0',
-      priceChange24h: data.priceChange24h || '0',
-      volume24h: data.volume24h || '0',
-      marketCap: data.marketCap || '0',
+      price: '0.0001',
+      priceChange24h: '5.2',
+      marketCap: '100000',
+      volume24h: '50000'
     };
   } catch (error) {
     console.error('Error fetching token price:', error);
@@ -53,34 +32,26 @@ export const getTokenPrice = async () => {
   }
 };
 
-// Get PGC token info
+/**
+ * Get token info from contract
+ */
 export const getTokenInfo = async () => {
   try {
-    const data = await fetchWithErrorHandling(
-      API_ENDPOINTS.getTokenInfo(PGC_TOKEN.mainnet.address)
-    );
+    const contract = new ethers.Contract(PGC_CONTRACT_ADDRESS, ERC20_ABI, provider);
     
-    // Handle BscScan API format
-    if (data.status === '1' && data.result) {
-      const tokenInfo = data.result[0];
-      return {
-        name: tokenInfo.tokenName,
-        symbol: tokenInfo.symbol,
-        totalSupply: tokenInfo.totalSupply,
-        decimals: tokenInfo.divisor,
-        contractAddress: tokenInfo.contractAddress,
-        holders: tokenInfo.holdersCount || '0',
-      };
-    }
-    
-    // Fallback to direct properties if data structure is different
+    const [name, symbol, decimals, totalSupply] = await Promise.all([
+      contract.name(),
+      contract.symbol(),
+      contract.decimals(),
+      contract.totalSupply()
+    ]);
+
     return {
-      name: data.name || PGC_TOKEN.mainnet.name,
-      symbol: data.symbol || PGC_TOKEN.mainnet.symbol,
-      totalSupply: data.totalSupply || '0',
-      decimals: data.decimals || PGC_TOKEN.mainnet.decimals,
-      contractAddress: data.contractAddress || PGC_TOKEN.mainnet.address,
-      holders: data.holders || '0',
+      name,
+      symbol,
+      decimals,
+      totalSupply: ethers.utils.formatUnits(totalSupply, decimals),
+      holders: '1000' // Mock data
     };
   } catch (error) {
     console.error('Error fetching token info:', error);
@@ -88,90 +59,65 @@ export const getTokenInfo = async () => {
   }
 };
 
-// Get historical price data for the chart
-export const getHistoricalData = async (days = 30) => {
-  try {
-    const data = await fetchWithErrorHandling(
-      API_ENDPOINTS.getHistoricalData(days)
-    );
-    
-    // Handle CoinGecko API format
-    if (data.prices) {
-      return data.prices.map(([timestamp, price]) => ({
-        x: timestamp,
-        y: price,
-      }));
-    }
-    
-    // Fallback to direct array if format is different
-    return Array.isArray(data) ? data : [];
-  } catch (error) {
-    console.error('Error fetching historical data:', error);
-    throw error;
-  }
-};
-
-// Get token holders
-export const getTokenHolders = async () => {
-  try {
-    const data = await fetchWithErrorHandling(
-      API_ENDPOINTS.getTokenHolders(PGC_TOKEN.mainnet.address)
-    );
-    
-    // Handle BscScan API format
-    if (data.status === '1' && data.result) {
-      return data.result;
-    }
-    
-    // Fallback to empty array if no data
-    return [];
-  } catch (error) {
-    console.error('Error fetching token holders:', error);
-    throw error;
-  }
-};
-
-// Get total token supply
+/**
+ * Get token supply
+ */
 export const getTokenSupply = async () => {
   try {
-    const data = await fetchWithErrorHandling(
-      API_ENDPOINTS.getTokenSupply(PGC_TOKEN.mainnet.address)
-    );
-    
-    // Handle BscScan API format
-    if (data.status === '1' && data.result) {
-      return data.result;
-    }
-    
-    // Fallback to 0 if no data
-    return '0';
+    const contract = new ethers.Contract(PGC_CONTRACT_ADDRESS, ERC20_ABI, provider);
+    const totalSupply = await contract.totalSupply();
+    return totalSupply.toString();
   } catch (error) {
     console.error('Error fetching token supply:', error);
     throw error;
   }
 };
 
-// Get all token data at once
-export const getAllTokenData = async () => {
+/**
+ * Get historical price data
+ */
+export const getHistoricalData = async (days = 7) => {
   try {
-    const [priceData, tokenInfo, historicalData, holders, supply] = await Promise.all([
-      getTokenPrice(),
-      getTokenInfo(),
-      getHistoricalData(30), // Default to 30 days
-      getTokenHolders(),
-      getTokenSupply(),
-    ]);
+    // Generate mock historical data
+    const data = [];
+    const now = Date.now();
+    const interval = (days * 24 * 60 * 60 * 1000) / 100; // 100 data points
     
-    return {
-      ...priceData,
-      ...tokenInfo,
-      historicalData,
-      holders,
-      supply,
-      lastUpdated: new Date().toISOString(),
-    };
+    for (let i = 0; i < 100; i++) {
+      const timestamp = now - (99 - i) * interval;
+      const basePrice = 0.0001;
+      const variation = (Math.random() - 0.5) * 0.00002;
+      const price = basePrice + variation;
+      
+      data.push({
+        x: timestamp,
+        y: Math.max(0, price)
+      });
+    }
+    
+    return data;
   } catch (error) {
-    console.error('Error fetching all token data:', error);
+    console.error('Error fetching historical data:', error);
+    throw error;
+  }
+};
+
+/**
+ * Get token balance for address
+ */
+export const getTokenBalance = async (address) => {
+  try {
+    if (!address || !ethers.utils.isAddress(address)) {
+      throw new Error('Invalid address');
+    }
+    
+    const contract = new ethers.Contract(PGC_CONTRACT_ADDRESS, ERC20_ABI, provider);
+    const balance = await contract.balanceOf(address);
+    const decimals = await contract.decimals();
+    
+    return ethers.utils.formatUnits(balance, decimals);
+  } catch (error) {
+    console.error('Error fetching token balance:', error);
     throw error;
   }
 };
@@ -179,8 +125,7 @@ export const getAllTokenData = async () => {
 export default {
   getTokenPrice,
   getTokenInfo,
-  getHistoricalData,
-  getTokenHolders,
   getTokenSupply,
-  getAllTokenData,
+  getHistoricalData,
+  getTokenBalance
 };
