@@ -306,8 +306,30 @@ La aplicación PetgasCoin DApp ahora funciona completamente con:
 4. **Optimizaciones** - Bundle size, performance
 5. **Auditoría de seguridad** - Revisión de código
 
+## 📋 Control de Versiones
+
+### Versión Actual: V1.1
+
+**IMPORTANTE:** Cada vez que se realice un cambio significativo en la aplicación, actualizar la versión en los siguientes archivos:
+
+#### Archivos que contienen la versión:
+1. **`src/components/Web3DependentComponents.js`** - Línea con el badge de versión en el header principal
+2. **`pages/dashboard.js`** - Línea con el badge de versión en el dashboard header
+3. **`README.md`** - Esta sección de control de versiones
+
+#### Historial de Versiones:
+- **V1.1** (Enero 2025) - Mejoras en UX: Loading screen impactante con spinner dorado brillante, detección inteligente de redes con nombres específicos, card unificada Wallet & Token Info con datos reales, botones de cambio de red mejorados
+- **V1.0** (Enero 2025) - Lanzamiento inicial con sistema de diseño PetGas completo, conexión MetaMask optimizada, datos reales de blockchain, y experiencia mobile-first
+
+#### Instrucciones para actualizar versión:
+1. Buscar todos los archivos que contengan `V1.0`
+2. Actualizar a la nueva versión (ej: `V1.1`, `V1.2`, etc.)
+3. Actualizar esta sección del README con los cambios realizados
+4. Commit con mensaje: `chore: bump version to VX.X`
+
 ---
 
 **Desarrollado por:** Kiro AI Assistant  
 **Fecha:** Enero 2025  
-**Estado:** ✅ Completado y Funcionando
+**Estado:** ✅ Completado y Funcionando  
+**Versión:** V1.1

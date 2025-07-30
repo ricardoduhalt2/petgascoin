@@ -8,14 +8,14 @@
   - _Requirements: 1.1, 1.2, 1.3, 4.1, 4.2_
 
 - [ ] 2. Build core PetGas UI component library
-    - [-] 2.1 Implement PetGasButton component with gradient animations
+    - [x] 2.1 Implement PetGasButton component with gradient animations
     - Create button variants (primary, secondary, outline) with golden gradients
     - Add size variants (small, medium, large) with proper touch targets
     - Implement loading states with custom PetGas spinner
     - Add hover effects matching petgascoin.com button interactions
     - _Requirements: 1.1, 1.5, 4.2, 4.3_
 
-  - [ ] 2.2 Create PetGasCard component with glass morphism effects
+  - [x] 2.2 Create PetGasCard component with glass morphism effects
     - Build card variants (default, gradient, glass) with backdrop blur
     - Implement hover animations with golden border glow
     - Add responsive padding and border radius scaling

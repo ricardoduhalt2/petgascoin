@@ -58,6 +58,47 @@ const WalletTokenCard = () => {
     return `${address.substring(0, 6)}...${address.substring(address.length - 4)}`;
   };
 
+  // Get network name from chainId
+  const getNetworkName = (chainId) => {
+    console.log('[WalletTokenCard] chainId received:', chainId, typeof chainId);
+    
+    // Handle different chainId formats (string, number, hex)
+    let normalizedChainId = chainId;
+    
+    if (typeof chainId === 'number') {
+      normalizedChainId = `0x${chainId.toString(16)}`;
+    } else if (typeof chainId === 'string' && !chainId.startsWith('0x')) {
+      // If it's a decimal string, convert to hex
+      const num = parseInt(chainId, 10);
+      if (!isNaN(num)) {
+        normalizedChainId = `0x${num.toString(16)}`;
+      }
+    }
+    
+    console.log('[WalletTokenCard] normalized chainId:', normalizedChainId);
+    
+    const networks = {
+      '0x1': 'Ethereum Mainnet',
+      '0x38': 'BSC Mainnet', 
+      '0x89': 'Polygon Mainnet',
+      '0xa86a': 'Avalanche Mainnet',
+      '0x61': 'BSC Testnet',
+      '0x3': 'Ropsten Testnet',
+      '0x4': 'Rinkeby Testnet',
+      '0x5': 'Goerli Testnet',
+      '0x2a': 'Kovan Testnet',
+      '0xa4b1': 'Arbitrum One',
+      '0xa': 'Optimism',
+      '0xfa': 'Fantom Opera',
+      '0x64': 'Gnosis Chain'
+    };
+    
+    const networkName = networks[normalizedChainId];
+    console.log('[WalletTokenCard] network name found:', networkName);
+    
+    return networkName || `Unknown Network (${chainId})`;
+  };
+
   // Handle network switch
   const handleSwitchNetwork = async () => {
     try {
@@ -160,7 +201,7 @@ const WalletTokenCard = () => {
               <div className="flex items-center space-x-2">
                 <span className={`h-2 w-2 rounded-full ${isCorrectNetwork ? 'bg-green-500' : 'bg-red-500'} animate-pulse`} />
                 <span className={`text-sm font-medium ${isCorrectNetwork ? 'text-green-400' : 'text-red-400'}`}>
-                  {chainId === '0x38' ? 'BSC Mainnet' : 'Wrong Network'}
+                  {isCorrectNetwork ? 'BSC CONNECTED' : getNetworkName(chainId)}
                 </span>
               </div>
             </div>

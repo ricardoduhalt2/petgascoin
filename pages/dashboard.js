@@ -11,6 +11,7 @@ import ContractAddress from '../src/components/ContractAddress';
 import WalletTokenCard from '../src/components/WalletTokenCard';
 import PetGasCard from '../src/components/ui/PetGasCard';
 import PetGasText from '../src/components/ui/PetGasText';
+import PetGasLoadingScreen from '../src/components/ui/PetGasLoadingScreen';
 import { toast } from 'react-hot-toast';
 
 const Dashboard = () => {
@@ -101,26 +102,20 @@ const Dashboard = () => {
   // Show loading screen while checking client-side or authentication
   if (!isClient || isCheckingAuth) {
     return (
-      <div className="min-h-screen bg-petgas-black flex items-center justify-center">
-        <div className="text-center">
-          <div className="loading-spinner mb-4"></div>
-          <p className="text-petgas-text-gray petgas-text-lg">
-            {!isClient ? 'Loading...' : 'Checking wallet connection...'}
-          </p>
-        </div>
-      </div>
+      <PetGasLoadingScreen 
+        message={!isClient ? 'Initializing PetgasCoin DApp...' : 'Checking wallet connection...'}
+        subMessage={!isClient ? 'Loading blockchain interface' : 'Verifying your wallet status'}
+      />
     );
   }
 
   // If not connected, this will be handled by the useEffect redirect
   if (!isConnected) {
     return (
-      <div className="min-h-screen bg-petgas-black flex items-center justify-center">
-        <div className="text-center">
-          <div className="loading-spinner mb-4"></div>
-          <p className="text-petgas-text-gray petgas-text-lg">Redirecting...</p>
-        </div>
-      </div>
+      <PetGasLoadingScreen 
+        message="Redirecting to login..."
+        subMessage="Please connect your wallet to continue"
+      />
     );
   }
 
@@ -137,9 +132,14 @@ const Dashboard = () => {
           {/* Header */}
           <header className="flex flex-col md:flex-row md:items-center md:justify-between">
             <div>
-              <PetGasText variant="gradient" size="3xl" className="mb-2">
-                PetgasCoin Dashboard
-              </PetGasText>
+              <div className="flex items-center mb-2">
+                <PetGasText variant="gradient" size="3xl">
+                  PetgasCoin Dashboard
+                </PetGasText>
+                <span className="ml-3 text-xs font-bold text-petgas-gold bg-petgas-gold/10 px-2 py-1 rounded-full border border-petgas-gold/30 animate-pulse">
+                  V1.1
+                </span>
+              </div>
               <p className="text-petgas-text-gray">
                 Track and manage your PGC tokens on Binance Smart Chain
               </p>

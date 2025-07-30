@@ -26,9 +26,14 @@ export default function Web3DependentComponents() {
               className="h-20 w-20 rounded-full border-4 border-petgas-gold shadow-2xl petgas-animate-float"
             />
           </div>
-          <h1 className="petgas-gradient-text-animated petgas-text-4xl petgas-font-black mb-4">
-            PetgasCoin
-          </h1>
+          <div className="flex items-center justify-center mb-4">
+            <h1 className="petgas-gradient-text-animated petgas-text-4xl petgas-font-black">
+              PetgasCoin
+            </h1>
+            <span className="ml-3 text-xs font-bold text-petgas-gold bg-petgas-gold/10 px-2 py-1 rounded-full border border-petgas-gold/30 animate-pulse">
+              V1.1
+            </span>
+          </div>
           <p className="petgas-text-base text-petgas-text-light mb-2">
             Next Generation Cryptocurrency
           </p>
