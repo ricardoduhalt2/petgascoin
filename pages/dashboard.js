@@ -8,6 +8,7 @@ import TokenInfo from '../src/components/TokenInfo';
 import AddToMetaMask from '../src/components/AddToMetaMask';
 import Chart from '../src/components/Chart';
 import ContractAddress from '../src/components/ContractAddress';
+import WalletTokenCard from '../src/components/WalletTokenCard';
 import PetGasCard from '../src/components/ui/PetGasCard';
 import PetGasText from '../src/components/ui/PetGasText';
 import { toast } from 'react-hot-toast';
@@ -151,16 +152,21 @@ const Dashboard = () => {
           {/* Wrong Network Warning */}
           {isWrongNetwork ? (
             <PetGasCard variant="warning" className="border-l-4 border-yellow-500">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <svg className="h-6 w-6 text-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                  </svg>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <div className="flex-shrink-0">
+                    <svg className="h-6 w-6 text-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <div className="ml-3">
+                    <p className="text-yellow-300 font-medium">
+                      Please switch to Binance Smart Chain (BSC) Mainnet to use this application.
+                    </p>
+                  </div>
                 </div>
-                <div className="ml-3">
-                  <p className="text-yellow-300 font-medium">
-                    Please switch to Binance Smart Chain (BSC) Mainnet to use this application.
-                  </p>
+                <div className="ml-4">
+                  <WalletCard />
                 </div>
               </div>
             </PetGasCard>
@@ -254,66 +260,10 @@ const Dashboard = () => {
               </PetGasCard>
             </div>
 
-            {/* Right Column - Wallet and Contract Info */}
+            {/* Right Column - Unified Wallet and Token Info */}
             <div className="space-y-6">
-              {/* Wallet Card */}
-              <PetGasCard title="Your Wallet">
-                {isConnected ? (
-                  <div className="space-y-4">
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm font-medium text-petgas-text-gray">Connected Wallet</span>
-                      <span className="text-sm font-medium text-petgas-text-white font-mono">
-                        {`${account.substring(0, 6)}...${account.substring(38)}`}
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm font-medium text-petgas-text-gray">Network</span>
-                      <span className={`text-sm font-medium ${chainId === '0x38' ? 'text-green-400' : 'text-red-400'}`}>
-                        {chainId === '0x38' ? 'BSC Mainnet' : 'Unsupported Network'}
-                      </span>
-                    </div>
-                    <div className="pt-4 border-t border-petgas-gold/20">
-                      <h4 className="text-sm font-medium text-petgas-text-gray mb-3">Your PGC Balance</h4>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center">
-                          <img 
-                            src={displayTokenInfo.logoURI} 
-                            alt={displayTokenInfo.symbol} 
-                            className="h-8 w-8 mr-3 rounded-full border border-yellow-500/30"
-                          />
-                          <div>
-                            <span className="text-2xl font-bold text-petgas-text-white">
-                              {hasUserBalance ? parseFloat(userBalanceFormatted).toLocaleString() : '0.00'}
-                            </span>
-                            <span className="ml-2 text-petgas-gold font-semibold">{displayTokenInfo.symbol}</span>
-                          </div>
-                        </div>
-                        {tokenDataLoading && (
-                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-yellow-400"></div>
-                        )}
-                      </div>
-                      {!isCorrectNetwork && (
-                        <p className="text-xs text-red-400 mt-2">
-                          Switch to BSC Mainnet to view balance
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                ) : (
-                  <div className="text-center py-6">
-                    <svg className="w-16 h-16 mx-auto mb-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                    </svg>
-                    <p className="text-petgas-text-gray mb-4">Connect your wallet to view balance</p>
-                    <WalletCard />
-                  </div>
-                )}
-              </PetGasCard>
-
-              {/* Contract Address */}
-              <PetGasCard title="Contract Address">
-                <ContractAddress />
-              </PetGasCard>
+              {/* Unified Wallet & Token Card */}
+              <WalletTokenCard />
 
               {/* About Card */}
               <PetGasCard title="About PGC">

@@ -184,6 +184,23 @@ const ConnectWalletFixed = ({ redirectToDashboard = false }) => {
     }
   };
 
+  // Render network switch button component
+  const renderNetworkSwitchButton = () => (
+    <button
+      onClick={handleSwitchNetwork}
+      disabled={isSwitchingNetwork}
+      className="inline-flex items-center justify-center px-6 py-3 bg-gradient-to-r from-orange-500 via-orange-600 to-orange-700 hover:from-orange-600 hover:via-orange-700 hover:to-orange-800 text-white rounded-lg font-semibold transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+    >
+      <NetworkIcon />
+      <span className="ml-2">
+        {isSwitchingNetwork ? 'Switching Network...' : 'Switch to BSC Mainnet'}
+      </span>
+      {isSwitchingNetwork && (
+        <div className="ml-3 h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+      )}
+    </button>
+  );
+
   // Set client-side flag
   useEffect(() => {
     setIsClient(true);

@@ -8,7 +8,7 @@
   - _Requirements: 1.1, 1.2, 1.3, 4.1, 4.2_
 
 - [ ] 2. Build core PetGas UI component library
-    - [ ] 2.1 Implement PetGasButton component with gradient animations
+    - [-] 2.1 Implement PetGasButton component with gradient animations
     - Create button variants (primary, secondary, outline) with golden gradients
     - Add size variants (small, medium, large) with proper touch targets
     - Implement loading states with custom PetGas spinner
