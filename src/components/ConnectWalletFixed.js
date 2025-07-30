@@ -106,6 +106,14 @@ const ConnectWalletFixed = ({ redirectToDashboard = false }) => {
   // Handle connect with WalletConnect
   const handleConnectWalletConnect = async () => {
     console.log('[ConnectWalletFixed] Connect WalletConnect button clicked');
+    
+    // Check if WalletConnect is properly configured
+    const projectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID;
+    if (!projectId || projectId === 'YOUR_PROJECT_ID') {
+      toast.error('WalletConnect not configured. Please use MetaMask for now.', { duration: 4000 });
+      return;
+    }
+    
     setWalletType('walletconnect');
     await handleConnect('walletconnect');
   };
@@ -244,50 +252,91 @@ const ConnectWalletFixed = ({ redirectToDashboard = false }) => {
     return <div className="p-4">Loading...</div>;
   }
 
-  // Render connect buttons
+  // Detect if user is on mobile device
+  const isMobileDevice = () => {
+    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  };
+
+  // Handle MetaMask connection optimized for mobile
+  const handleMetaMaskConnect = async () => {
+    console.log('[ConnectWalletFixed] MetaMask connect clicked');
+    setWalletType('metamask');
+    setLocalIsConnecting(true);
+    setCurrentError(null);
+    clearError();
+    
+    try {
+      const isMobile = isMobileDevice();
+      
+      // Check if MetaMask is available
+      if (!window.ethereum) {
+        if (isMobile) {
+          // On mobile, redirect to MetaMask app or app store
+          const metamaskAppUrl = `https://metamask.app.link/dapp/${window.location.host}${window.location.pathname}`;
+          toast.error('MetaMask not detected. Opening MetaMask app...', { duration: 3000 });
+          window.open(metamaskAppUrl, '_blank');
+          return;
+        } else {
+          // On desktop, show installation message
+          toast.error('Please install MetaMask extension', { duration: 4000 });
+          window.open('https://metamask.io/download/', '_blank');
+          return;
+        }
+      }
+
+      const success = await connect('metamask');
+      
+      if (success) {
+        console.log('[ConnectWalletFixed] MetaMask connected successfully');
+        toast.success('Connected to MetaMask!');
+      } else {
+        console.log('[ConnectWalletFixed] MetaMask connection failed');
+        setCurrentError('Failed to connect to MetaMask. Please try again.');
+      }
+    } catch (error) {
+      console.error('[ConnectWalletFixed] Error connecting MetaMask:', error);
+      
+      const processedError = errorHandler.handleError(error, {
+        component: 'ConnectWalletFixed',
+        operation: 'connect-metamask'
+      });
+      
+      setCurrentError(processedError.userMessage || error.message);
+    } finally {
+      setLocalIsConnecting(false);
+    }
+  };
+
+  // Render connect button (only MetaMask)
   const renderConnectButtons = () => (
-    <div className="space-y-3 w-full">
-      {/* MetaMask Button */}
+    <div className="w-full">
+      {/* MetaMask Button - Optimized for Mobile */}
       <button
-        onClick={handleConnectMetaMask}
+        onClick={handleMetaMaskConnect}
         disabled={isLoading || isConnecting || localIsConnecting}
-        className={`w-full flex items-center justify-center px-4 py-3 rounded-lg border ${
+        className={`w-full flex items-center justify-center px-6 py-4 rounded-lg border-2 ${
           (isLoading || localIsConnecting) && walletType === 'metamask' 
             ? 'bg-orange-500 border-orange-600 text-white' 
             : 'bg-petgas-gold hover:bg-petgas-gold-light border-petgas-gold hover:border-petgas-gold-light text-petgas-black'
-        } transition-colors duration-200 font-semibold`}
+        } transition-all duration-200 font-semibold text-lg shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95`}
       >
         <div className="flex items-center">
           <MetaMaskIcon />
           <span className="ml-3">
-            {(isLoading || localIsConnecting) && walletType === 'metamask' ? 'Connecting...' : 'MetaMask'}
+            {(isLoading || localIsConnecting) && walletType === 'metamask' ? 'Connecting...' : 'Connect with MetaMask'}
           </span>
           {(isLoading || localIsConnecting) && walletType === 'metamask' && (
-            <div className="ml-2 h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+            <div className="ml-3 h-5 w-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
           )}
         </div>
       </button>
       
-      {/* WalletConnect Button */}
-      <button
-        onClick={handleConnectWalletConnect}
-        disabled={isLoading || isConnecting || localIsConnecting}
-        className={`w-full flex items-center justify-center px-4 py-3 rounded-lg border ${
-          (isLoading || localIsConnecting) && walletType === 'walletconnect' 
-            ? 'bg-blue-500 border-blue-600 text-white' 
-            : 'bg-petgas-amber hover:bg-petgas-orange border-petgas-amber hover:border-petgas-orange text-petgas-black'
-        } transition-colors duration-200 font-semibold`}
-      >
-        <div className="flex items-center">
-          <WalletIcon />
-          <span className="ml-3">
-            {(isLoading || localIsConnecting) && walletType === 'walletconnect' ? 'Connecting...' : 'WalletConnect'}
-          </span>
-          {(isLoading || localIsConnecting) && walletType === 'walletconnect' && (
-            <div className="ml-2 h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-          )}
-        </div>
-      </button>
+      {/* Mobile-specific help text */}
+      {isMobileDevice() && (
+        <p className="text-center text-petgas-text-muted text-xs mt-3">
+          On mobile? Make sure you have MetaMask app installed
+        </p>
+      )}
     </div>
   );
 
