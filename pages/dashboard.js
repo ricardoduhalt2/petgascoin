@@ -141,7 +141,7 @@ const Dashboard = () => {
                   PetgasCoin Dashboard
                 </PetGasText>
                 <span className="ml-3 text-xs font-bold text-petgas-gold bg-petgas-gold/10 px-2 py-1 rounded-full border border-petgas-gold/30 animate-pulse">
-                  V1.2
+                  V1.3
                 </span>
               </div>
               <p className="text-petgas-text-gray">

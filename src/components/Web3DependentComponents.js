@@ -16,10 +16,11 @@ export default function Web3DependentComponents() {
   } = useWeb3();
   const router = useRouter();
 
-  // Smart redirect supervisor: observa conexión y red, con backoff y timeout
+  // Smart redirect supervisor (compatible Firefox): eventos + polling + backoff
   const redirectingRef = useRef(false);
   const backoffRef = useRef(500);
   const timeoutRef = useRef(null);
+  const pollRef = useRef(null);
 
   function safeClearTimeout() {
     if (timeoutRef.current) {
@@ -29,40 +30,79 @@ export default function Web3DependentComponents() {
   }
 
   useEffect(() => {
-    // Cuando el usuario está conectado y no hay red equivocada, intentamos redirigir
-    if (isConnected && !isWrongNetwork && !redirectingRef.current) {
-      redirectingRef.current = true;
+    // Limpia polling
+    const stopPolling = () => {
+      if (pollRef.current) {
+        clearInterval(pollRef.current);
+        pollRef.current = null;
+      }
+    };
 
+    // Evento -> intenta redirect seguro
+    const safeRedirect = () => {
+      if (redirectingRef.current) return;
+      redirectingRef.current = true;
       // Intento inmediato
       router.push('/dashboard').catch(() => {});
-
-      // Supervisor con reintentos exponenciales por si el árbol de React todavía no está listo
-      const attemptRedirect = () => {
-        // Si ya estamos en /dashboard, detener
+      // Polling corto 500ms por 5s (Firefox a veces retrasa resolución)
+      let remaining = 10;
+      stopPolling();
+      pollRef.current = setInterval(() => {
         if (typeof window !== 'undefined' && window.location.pathname === '/dashboard') {
           redirectingRef.current = false;
+          stopPolling();
           return;
         }
         router.push('/dashboard').catch(() => {});
-        // Aumenta el backoff hasta ~5s máximo
-        backoffRef.current = Math.min(backoffRef.current * 2, 5000);
-        timeoutRef.current = setTimeout(attemptRedirect, backoffRef.current);
-      };
+        remaining -= 1;
+        if (remaining <= 0) {
+          // fallback backoff
+          stopPolling();
+          const attemptRedirect = () => {
+            if (typeof window !== 'undefined' && window.location.pathname === '/dashboard') {
+              redirectingRef.current = false;
+              return;
+            }
+            router.push('/dashboard').catch(() => {});
+            backoffRef.current = Math.min(backoffRef.current * 2, 5000);
+            timeoutRef.current = setTimeout(attemptRedirect, backoffRef.current);
+          };
+          safeClearTimeout();
+          timeoutRef.current = setTimeout(attemptRedirect, 750);
+        }
+      }, 500);
+    };
 
-      // Programa reintentos suaves (750ms, 1.5s, 3s, 5s)
-      safeClearTimeout();
-      timeoutRef.current = setTimeout(attemptRedirect, 750);
+    // Suscribir a eventos de MetaMask (Firefox-friendly)
+    if (typeof window !== 'undefined' && window.ethereum) {
+      const onAccountsChanged = (accs) => {
+        if (Array.isArray(accs) && accs.length > 0 && !isWrongNetwork) safeRedirect();
+      };
+      const onChainChanged = (cid) => {
+        // BSC Mainnet 56 / 0x38
+        const ok = cid === '0x38' || cid === 56 || cid === '56';
+        if (ok && isConnected) safeRedirect();
+      };
+      window.ethereum.on?.('accountsChanged', onAccountsChanged);
+      window.ethereum.on?.('chainChanged', onChainChanged);
+
+      // Cleanup
+      return () => {
+        window.ethereum.removeListener?.('accountsChanged', onAccountsChanged);
+        window.ethereum.removeListener?.('chainChanged', onChainChanged);
+        safeClearTimeout();
+        stopPolling();
+      };
     }
 
-    // Si se desconecta o hay red equivocada, cancela intentos
-    if ((!isConnected || isWrongNetwork) && redirectingRef.current) {
-      redirectingRef.current = false;
-      backoffRef.current = 500;
-      safeClearTimeout();
+    // Estado actual ya conectado y red correcta => dispara redirect
+    if (isConnected && !isWrongNetwork) {
+      safeRedirect();
     }
 
     return () => {
       safeClearTimeout();
+      stopPolling();
     };
   }, [isConnected, isWrongNetwork, router]);
 
@@ -176,7 +216,7 @@ export default function Web3DependentComponents() {
               PetgasCoin
             </h1>
             <span className="ml-3 text-xs font-bold text-petgas-gold bg-petgas-gold/10 px-2 py-1 rounded-full border border-petgas-gold/30 animate-pulse">
-              V1.2
+              V1.3
             </span>
           </div>
           <p className="petgas-text-base text-petgas-text-light mb-2">

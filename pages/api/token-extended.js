@@ -252,8 +252,8 @@ async function scrapeBscScan() {
     textBetween(html, ">Circulating Supply<", "</div>") ||
     textBetween(html, "Circulating Supply", "</tr>");
 
-  // Verificación de contrato
-  const verified =
+  // Verificación de contrato (best-effort por HTML)
+  let verified =
     html.includes("Contract Source Code Verified") ||
     html.includes("Verified Contract") ||
     html.includes("Contract Source Code Verified (Exact Match)");
@@ -344,6 +344,25 @@ async function getProviderReady() {
   return null;
 }
 
+async function checkVerifiedViaApi(address) {
+  const apiKey = process.env.NEXT_PUBLIC_BSCSCAN_API_KEY || process.env.BSCSCAN_API_KEY;
+  if (!apiKey) return null;
+  try {
+    const url = `https://api.bscscan.com/api?module=contract&action=getsourcecode&address=${address}&apikey=${apiKey}`;
+    const r = await fetch(url);
+    const j = await r.json();
+    if (j?.status === "1" && Array.isArray(j.result) && j.result.length > 0) {
+      const item = j.result[0];
+      // ContractName present and SourceCode non-empty generally implies verified
+      const src = item?.SourceCode;
+      const contractName = item?.ContractName;
+      const isVer = (src && String(src).length > 0) || (contractName && String(contractName).length > 0);
+      return isVer ? true : false;
+    }
+  } catch (_) {}
+  return null;
+}
+
 export default async function handler(req, res) {
   const now = Date.now();
   if (cache.data && now - cache.ts < TEN_MIN) {
@@ -403,6 +422,14 @@ export default async function handler(req, res) {
   } catch (e) {
     scraped = {};
   }
+
+  // 2b) Verificación robusta vía API si tenemos API KEY
+  try {
+    const apiVerified = await checkVerifiedViaApi(TOKEN_ADDRESS);
+    if (apiVerified !== null) {
+      scraped.verified = apiVerified;
+    }
+  } catch (_) {}
 
   const data = {
     holders: holdersCount(),

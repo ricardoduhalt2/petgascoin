@@ -195,43 +195,25 @@ export class TokenDataService {
     if (cached) return cached;
 
     try {
-      console.log('[TokenDataService] Fetching token price...');
-      
-      if (!this.apiKey) {
-        console.warn('[TokenDataService] No BSCScan API key provided');
-        return this.getFallbackPriceData();
-      }
+      console.log('[TokenDataService] Fetching token price via server API...');
+      const origin = typeof window !== 'undefined' ? window.location.origin : '';
+      const res = await fetch(`${origin}/api/token-extended`, { cache: 'no-store' });
+      const data = await res.json();
 
-      const response = await fetch(
-        `https://api.bscscan.com/api?module=stats&action=tokensupply&contractaddress=${this.contractAddress}&apikey=${this.apiKey}`
-      );
-
-      if (!response.ok) {
-        throw new Error(`BSCScan API error: ${response.status}`);
-      }
-
-      const data = await response.json();
-      
-      if (data.status !== '1') {
-        throw new Error(`BSCScan API error: ${data.message}`);
-      }
-
-      // For now, we'll return basic supply data
-      // In a real implementation, you'd integrate with price APIs like CoinGecko or PancakeSwap
       const priceData = {
-        totalSupply: data.result,
-        price: '0.00', // Would be fetched from price API
-        marketCap: '0.00',
-        volume24h: '0.00',
-        priceChange24h: '0.00',
+        totalSupply: data?.totalSupply ?? null,
+        price: data?.price != null ? String(data.price) : 'N/A',
+        marketCap: data?.marketCap != null ? String(data.marketCap) : 'N/A',
+        volume24h: 'N/A',
+        priceChange24h: 'N/A',
         lastUpdated: new Date().toISOString(),
-        source: 'BSCScan'
+        source: 'api-token-extended'
       };
 
       this.setCachedData(cacheKey, priceData);
       return priceData;
     } catch (error) {
-      console.error('[TokenDataService] Error fetching token price:', error);
+      console.error('[TokenDataService] Error fetching token price (server API):', error);
       return this.getFallbackPriceData();
     }
   }
@@ -261,46 +243,21 @@ export class TokenDataService {
     if (cached) return cached;
 
     try {
-      console.log('[TokenDataService] Fetching token holders...');
-      
-      if (!this.apiKey) {
-        console.warn('[TokenDataService] No BSCScan API key provided, using fallback data');
-        return this.getFallbackHoldersData();
-      }
-
-      // Try to get holders data from BSCScan
-      const response = await fetch(
-        `https://api.bscscan.com/api?module=token&action=tokenholderlist&contractaddress=${this.contractAddress}&page=1&offset=100&apikey=${this.apiKey}`
-      );
-
-      if (!response.ok) {
-        console.warn('[TokenDataService] BSCScan API request failed, using fallback data');
-        return this.getFallbackHoldersData();
-      }
-
-      const data = await response.json();
-      
-      if (data.status !== '1') {
-        console.warn('[TokenDataService] BSCScan API error:', data.message, 'using fallback data');
-        return this.getFallbackHoldersData();
-      }
-
-      // For now, we'll estimate based on the sample we get
-      // In a real implementation, you'd need to paginate through all results
-      const sampleSize = data.result?.length || 0;
-      const estimatedHolders = sampleSize > 0 ? Math.max(sampleSize * 10, 1000) : 1000; // Conservative estimate
+      console.log('[TokenDataService] Fetching token holders via server API...');
+      const origin = typeof window !== 'undefined' ? window.location.origin : '';
+      const res = await fetch(`${origin}/api/token-stats`, { cache: 'no-store' });
+      const data = await res.json();
 
       const holdersData = {
-        count: estimatedHolders,
+        count: data?.holders ?? 0,
         lastUpdated: new Date().toISOString(),
-        source: 'BSCScan (estimated)',
-        note: 'Estimated based on sample data'
+        source: 'api-token-stats'
       };
 
       this.setCachedData(cacheKey, holdersData);
       return holdersData;
     } catch (error) {
-      console.error('[TokenDataService] Error fetching token holders:', error);
+      console.error('[TokenDataService] Error fetching token holders (server API):', error);
       return this.getFallbackHoldersData();
     }
   }
@@ -326,46 +283,21 @@ export class TokenDataService {
     if (cached) return cached;
 
     try {
-      console.log('[TokenDataService] Fetching recent transfers...');
-      
-      if (!this.apiKey) {
-        console.warn('[TokenDataService] No BSCScan API key provided');
-        return { transfers: [], error: 'No API key' };
-      }
-
-      const response = await fetch(
-        `https://api.bscscan.com/api?module=account&action=tokentx&contractaddress=${this.contractAddress}&page=1&offset=${limit}&sort=desc&apikey=${this.apiKey}`
-      );
-
-      if (!response.ok) {
-        throw new Error(`BSCScan API error: ${response.status}`);
-      }
-
-      const data = await response.json();
-      
-      if (data.status !== '1') {
-        throw new Error(`BSCScan API error: ${data.message}`);
-      }
-
-      const transfers = data.result.map(tx => ({
-        hash: tx.hash,
-        from: tx.from,
-        to: tx.to,
-        value: ethers.utils.formatUnits(tx.value, tx.tokenDecimal),
-        timestamp: new Date(parseInt(tx.timeStamp) * 1000).toISOString(),
-        blockNumber: tx.blockNumber
-      }));
+      console.log('[TokenDataService] Fetching recent transfers via server API...');
+      const origin = typeof window !== 'undefined' ? window.location.origin : '';
+      const res = await fetch(`${origin}/api/token-extended`, { cache: 'no-store' });
+      const data = await res.json();
 
       const transfersData = {
-        transfers,
+        transfers: Array.isArray(data?.recentTransfers) ? data.recentTransfers.slice(0, limit) : [],
         lastUpdated: new Date().toISOString(),
-        source: 'BSCScan'
+        source: 'api-token-extended'
       };
 
       this.setCachedData(cacheKey, transfersData);
       return transfersData;
     } catch (error) {
-      console.error('[TokenDataService] Error fetching recent transfers:', error);
+      console.error('[TokenDataService] Error fetching recent transfers (server API):', error);
       return {
         transfers: [],
         error: 'Failed to fetch transfers data',

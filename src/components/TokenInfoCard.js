@@ -178,21 +178,30 @@ export default function TokenInfoCard({ account, isConnected, isWrongNetwork }) 
     <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center">
-          <div className="w-12 h-12 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-center mr-4">
-            <span className="text-white font-bold text-lg">PGC</span>
+          {/* Token logo from BscScan (fallback to local circle) */}
+          <div className="w-12 h-12 mr-4 rounded-full border border-yellow-300 flex items-center justify-center overflow-hidden bg-gradient-to-r from-yellow-100 to-yellow-200">
+            <img
+              src="https://bscscan.com/token/images/petgas_32.png?v=2"
+              alt="PGC"
+              className="w-10 h-10"
+              onError={(e) => {
+                e.currentTarget.style.display = 'none';
+                // keep gradient circle with letters as fallback
+              }}
+            />
           </div>
           <div>
-            <h2 className="text-2xl font-bold text-gray-900">{tokenData.name}</h2>
-            <p className="text-gray-600">{tokenData.symbol}</p>
+            <h2 className="text-2xl font-bold text-gray-900">{tokenData.name || 'PetgasCoin'}</h2>
+            <p className="text-gray-600">{tokenData.symbol || 'PGC'}</p>
           </div>
         </div>
-        
+
         <div className="text-right">
           <div className="text-3xl font-bold text-gray-900">
-            ${tokenData.price}
+            {extended.price != null ? `$${Number(extended.price).toFixed(6)}` : `$${tokenData.price || '0.00'}`}
           </div>
           <div className="text-sm text-gray-500">
-            Market Cap: ${formatLargeNumber(tokenData.marketCap)}
+            Market Cap: {extended.marketCap != null ? `$${formatK(extended.marketCap)}` : `$${formatLargeNumber(tokenData.marketCap)}`}
           </div>
         </div>
       </div>
@@ -259,8 +268,16 @@ export default function TokenInfoCard({ account, isConnected, isWrongNetwork }) 
         />
       </div>
 
-      {/* Verification badge */}
-      <div className="mb-6">
+      {/* Verification badge + link to BscScan */}
+      <div className="mb-6 flex items-center gap-3">
+        <a
+          href={`https://bscscan.com/token/0x46617e7bca14de818d9E5cFf2aa106b72CB33fe3`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-xs text-blue-600 underline"
+        >
+          View on BscScan
+        </a>
         <div className="inline-flex items-center px-3 py-1 rounded-full border"
              style={{ borderColor: extended.verified ? '#16a34a' : '#d1d5db' }}>
           <span className={`w-2 h-2 rounded-full mr-2 ${extended.verified ? 'bg-green-500 animate-ping' : 'bg-gray-300'}`} />
