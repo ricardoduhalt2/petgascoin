@@ -264,52 +264,63 @@ export default function Web3DependentComponents() {
             </p>
           </div>
 
-          {/* Botón único inteligente con redirect asistido por IA (supervisor de estado) */}
+          {/* Botón único inteligente con fixes para Mobile (MetaMask app) y Desktop */}
           <button
             onClick={async () => {
               try {
                 const isMobile = typeof window !== 'undefined' && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-                const hasMM = typeof window !== 'undefined' && window.ethereum && window.ethereum.isMetaMask;
+                const href = typeof window !== 'undefined' ? window.location.href : '';
+                const origin = typeof window !== 'undefined' ? window.location.origin : '';
+                const dappHost = origin.replace(/^https?:\/\//, '');
 
-                // Lock para evitar doble disparo de conexiones
+                // Evitar doble-conexión
                 if (redirectingRef.current) {
-                  // Si ya se inició secuencia de redirect, forzamos un push adicional
                   router.push('/dashboard').catch(() => {});
                   return;
                 }
 
-                // 1) Desktop con MetaMask -> usa MetaMask
-                if (!isMobile && hasMM) {
-                  await connect();
-                } else if (!isMobile && !hasMM) {
-                  // 2) Desktop sin MetaMask -> WalletConnect QR
-                  await connectWithWalletConnect();
-                } else if (isMobile && hasMM) {
-                  // 3) Mobile con MetaMask -> deep-link
-                  const dappUrl = window.location.origin;
-                  window.open(`https://metamask.app.link/dapp/${dappUrl.replace(/^https?:\/\//, '')}`, '_blank');
+                // 1) Mobile: siempre intentar deep-link universal hacia MetaMask con la URL completa
+                if (isMobile) {
+                  // iOS/Android MetaMask universal link (no usar target=_blank para permitir apertura de app)
+                  window.location.href = `https://metamask.app.link/dapp/${dappHost}`;
+                  // backup: si no abre en 1200ms, intentar WalletConnect
+                  setTimeout(async () => {
+                    if (!window.ethereum) {
+                      await connectWithWalletConnect();
+                    }
+                  }, 1200);
                 } else {
-                  // 4) Mobile sin MetaMask -> WalletConnect
-                  await connectWithWalletConnect();
+                  // 2) Desktop: si hay MetaMask usa connect(); si no, mostrar QR WalletConnect
+                  const hasMM = typeof window !== 'undefined' && window.ethereum && window.ethereum.isMetaMask;
+                  if (hasMM) {
+                    await connect();
+                  } else {
+                    await connectWithWalletConnect();
+                  }
                 }
 
-                // Tras iniciar conexión, programa redirect inmediato y bajo supervisión
+                // Supervisar redirección a /dashboard
                 redirectingRef.current = true;
                 backoffRef.current = 500;
-                router.push('/dashboard').catch(() => {});
-                safeClearTimeout();
-                timeoutRef.current = setTimeout(function retry() {
+                const start = Date.now();
+                const maxWait = 8000; // 8s máximo
+                const tick = async () => {
                   if (typeof window !== 'undefined' && window.location.pathname === '/dashboard') {
                     redirectingRef.current = false;
                     return;
                   }
                   router.push('/dashboard').catch(() => {});
-                  backoffRef.current = Math.min(backoffRef.current * 2, 5000);
-                  timeoutRef.current = setTimeout(retry, backoffRef.current);
-                }, 600);
+                  if (Date.now() - start > maxWait) {
+                    redirectingRef.current = false;
+                    return;
+                  }
+                  backoffRef.current = Math.min(backoffRef.current * 1.5, 1500);
+                  timeoutRef.current = setTimeout(tick, backoffRef.current);
+                };
+                safeClearTimeout();
+                timeoutRef.current = setTimeout(tick, 400);
               } catch (e) {
                 console.error('Smart connect failed', e);
-                // Fallback final con intento de redirect si ya hay sesión activa
                 try { await connect(); } catch {}
                 router.push('/dashboard').catch(() => {});
               }
