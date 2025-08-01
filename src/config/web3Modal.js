@@ -2,14 +2,14 @@ import { createWeb3Modal, defaultWagmiConfig } from '@web3modal/wagmi';
 import { mainnet, bsc } from 'wagmi/chains';
 
 // 1. Define constants
-const projectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || 'YOUR_PROJECT_ID';
+const projectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || '71585499-cba3-4163-8cea-048090109d7e';
 
 // 2. Create wagmiConfig
 const metadata = {
-  name: 'PetGasCoin DApp',
-  description: 'PetGasCoin - The Future of Pet Care on Blockchain',
-  url: 'https://petgascoin.com',
-  icons: ['https://bscscan.com/token/images/petgas_32.png']
+  name: process.env.WALLETCONNECT_NAME || 'PetgasCoin DApp',
+  description: process.env.WALLETCONNECT_DESCRIPTION || 'PetgasCoin Dashboard Connect',
+  url: process.env.WALLETCONNECT_URL || 'https://petgascoin.com',
+  icons: [process.env.WALLETCONNECT_ICONS || 'https://petgascoin.com/media/LogoPetgasCoinTransparent.png?w=256&q=90&f=webp']
 };
 
 // Configure chains with BSC as the default chain
@@ -32,16 +32,16 @@ export const web3modal = createWeb3Modal({
   projectId,
   chains,
   defaultChain,
-  themeMode: 'light',
+  themeMode: 'dark',
   themeVariables: {
-    '--w3m-color-mix': '#F6851B', // MetaMask orange
-    '--w3m-color-mix-strength': 20,
+    '--w3m-color-mix': '#E5B80B',
+    '--w3m-color-mix-strength': 25,
     '--w3m-font-family': 'Inter, sans-serif',
-    '--w3m-border-radius-master': '8px',
-    '--w3m-border-radius': '8px',
-    '--w3m-button-border-radius': '8px',
-    '--w3m-accent': '#F6851B', // MetaMask orange
-    '--w3m-background-color': '#F6851B',
+    '--w3m-border-radius-master': '10px',
+    '--w3m-border-radius': '10px',
+    '--w3m-button-border-radius': '10px',
+    '--w3m-accent': '#E5B80B',
+    '--w3m-background-color': '#0B0B0F',
     '--w3m-background-border-radius': '12px',
   },
   // Customize wallet buttons
