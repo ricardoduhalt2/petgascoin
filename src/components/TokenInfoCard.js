@@ -100,15 +100,19 @@ export default function TokenInfoCard({ account, isConnected, isWrongNetwork }) 
         const origin = typeof window !== 'undefined' ? window.location.origin : '';
         const res = await fetch(`${origin}/api/token-extended`);
         const data = await res.json();
+        // protección: si el endpoint devuelve HTML (por proxy/CDN) no intentes parsear
+        if (typeof data !== 'object' || data === null) {
+          throw new Error('Invalid response');
+        }
         setExtended({
-          price: data?.price ?? null,
-          marketCap: data?.marketCap ?? null,
+          price: Number.isFinite(Number(data?.price)) ? Number(data.price) : null,
+          marketCap: Number.isFinite(Number(data?.marketCap)) ? Number(data.marketCap) : null,
           totalSupply: data?.totalSupply ?? null,
           circulatingSupply: data?.circulatingSupply ?? null,
           decimals: data?.decimals ?? null,
-          holders24h: data?.holders24h ?? null,
-          transfers24h: data?.transfers24h ?? null,
-          verified: data?.verified ?? null,
+          holders24h: Number.isFinite(Number(data?.holders24h)) ? Number(data.holders24h) : null,
+          transfers24h: Number.isFinite(Number(data?.transfers24h)) ? Number(data.transfers24h) : null,
+          verified: typeof data?.verified === 'boolean' ? data.verified : null,
           topHolders: Array.isArray(data?.topHolders) ? data.topHolders : [],
           recentTransfers: Array.isArray(data?.recentTransfers) ? data.recentTransfers : [],
           loading: false,
@@ -122,6 +126,7 @@ export default function TokenInfoCard({ account, isConnected, isWrongNetwork }) 
           totalSupply: data?.totalSupply ?? td.totalSupply,
         }));
       } catch (e) {
+        // no romper UI; dejar placeholders en vez de bloquear chips
         setExtended((s) => ({ ...s, loading: false, error: e?.message || 'failed' }));
       }
     }
@@ -243,10 +248,15 @@ export default function TokenInfoCard({ account, isConnected, isWrongNetwork }) 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
         <StatChip
           label="Holders"
-          value={formatK(liveStats.holders || tokenData.holders)}
-          loading={liveStats.loading}
+          value={
+            liveStats.holders != null
+              ? formatK(liveStats.holders)
+              : tokenData.holders
+              ? formatK(tokenData.holders)
+              : '—'
+          }
+          loading={false}
           color="bg-white"
-          spin
         />
         <StatChip
           label="Total Transfers"
