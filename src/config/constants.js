@@ -88,7 +88,7 @@ export const NETWORK_CONFIG = Object.freeze({
 export const APP_CONFIG = Object.freeze({
   NAME: 'PetgasCoin DApp',
   DESCRIPTION: 'PetgasCoin - The next generation cryptocurrency for the pet industry',
-  VERSION: '1.0.0',
+  VERSION: '1.4.0',
   ENVIRONMENT: process.env.NODE_ENV || 'development',
   IS_TESTNET: process.env.NEXT_PUBLIC_IS_TESTNET === 'true',
   WALLETCONNECT_PROJECT_ID: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || '',
@@ -120,3 +120,6 @@ export const PGC_TESTNET_CONTRACT = PGC_TESTNET_ADDRESS;
 Object.freeze(TOKEN_CONFIG);
 Object.freeze(NETWORK_CONFIG);
 Object.freeze(APP_CONFIG);
+
+// Display version badge string for UI components
+export const DISPLAY_VERSION = 'V1.4';

@@ -1,5 +1,17 @@
 # PetgasCoin DApp - Enhanced UI & Mobile-First Experience
 
+> Gestión de versión UI
+>
+> - La versión visible (badge “Vx.x”) debe mantenerse sincronizada entre:
+>   - Login/Home (src/components/Web3DependentComponents.js)
+>   - Dashboard (pages/dashboard.js)
+> - Cuando se haga un bump de versión (por ejemplo “V1.4” / “1.4.0”), actualizar:
+>   - Badge visible en Login y Dashboard al nuevo “Vx.x”
+>   - APP_CONFIG.VERSION en:
+>     - src/config/constants.js (APP_CONFIG.VERSION = 'x.y.z' y DISPLAY_VERSION = 'Vx.y')
+>     - src/utils/constants.js (APP_CONFIG.VERSION = 'x.y.z')
+> - Política: estos cambios se aplican únicamente cuando el Product Owner lo solicite expresamente.
+
 ## 🎯 Proyecto Completado ✅
 
 Este proyecto implementa una DApp completa para el token PetgasCoin (PGC) en Binance Smart Chain con un sistema de diseño avanzado, experiencia mobile-first y conexión MetaMask optimizada.

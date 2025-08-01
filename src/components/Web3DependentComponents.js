@@ -215,9 +215,9 @@ export default function Web3DependentComponents() {
             <h1 className="petgas-gradient-text-animated petgas-text-4xl petgas-font-black">
               PetgasCoin
             </h1>
-            <span className="ml-3 text-xs font-bold text-petgas-gold bg-petgas-gold/10 px-2 py-1 rounded-full border border-petgas-gold/30 animate-pulse">
-              V1.3
-            </span>
+              <span className="ml-3 text-xs font-bold text-petgas-gold bg-petgas-gold/10 px-2 py-1 rounded-full border border-petgas-gold/30 animate-pulse">
+                V1.4
+              </span>
           </div>
           <p className="petgas-text-base text-petgas-text-light mb-2">
             Next Generation Cryptocurrency

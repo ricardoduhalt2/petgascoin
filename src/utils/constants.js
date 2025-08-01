@@ -63,7 +63,7 @@ export const APP_CONFIG = {
   NAME: process.env.NEXT_PUBLIC_APP_NAME || 'PetGasCoin',
   DESCRIPTION: process.env.NEXT_PUBLIC_APP_DESCRIPTION || 'PetGasCoin DApp',
   URL: process.env.NEXT_PUBLIC_APP_URL || 'https://petgascoin.com',
-  VERSION: '1.0.0',
+  VERSION: '1.4.0',
   AUTHOR: 'PetGasCoin Team',
 };
 

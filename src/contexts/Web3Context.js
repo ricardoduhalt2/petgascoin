@@ -156,7 +156,8 @@ export const Web3Provider = ({ children }) => {
   // Establish connection with provider
   const establishConnection = useCallback(async (provider, accountAddress = null) => {
     try {
-      const web3Provider = new ethers.providers.Web3Provider(provider);
+      // Important: use "any" so ethers does not pin the initial network
+      const web3Provider = new ethers.providers.Web3Provider(provider, 'any');
       const signer = web3Provider.getSigner();
       const network = await web3Provider.getNetwork();
       
@@ -237,9 +238,22 @@ export const Web3Provider = ({ children }) => {
       console.log('[Web3Context] Chain changed:', chainIdHex);
       
       try {
-        const newChainId = parseInt(chainIdHex, 16);
+        // Recreate ethers Web3Provider with "any" to avoid pinned-network mismatch
+        const baseProvider = provider;
+        if (!baseProvider) {
+          throw new Error('No base provider available on chainChanged');
+        }
+        const web3Provider = new ethers.providers.Web3Provider(baseProvider, 'any');
+        const network = await web3Provider.getNetwork();
+        
+        const newChainId = typeof chainIdHex === 'string' ? parseInt(chainIdHex, 16) : network.chainId;
         setChainId(newChainId);
         setNetworkId(newChainId.toString());
+        
+        // Update refs
+        providerRef.current = web3Provider;
+        libraryRef.current = web3Provider;
+        signerRef.current = web3Provider.getSigner();
         
         // Check if correct network
         const isCorrect = newChainId === TARGET_CHAIN_ID;
@@ -250,7 +264,7 @@ export const Web3Provider = ({ children }) => {
         if (isCorrect) {
           setNetworkName(TARGET_NETWORK_NAME);
         } else {
-          setNetworkName(`Chain ${newChainId}`);
+          setNetworkName(network?.name === 'unknown' ? `Chain ${newChainId}` : network?.name || `Chain ${newChainId}`);
         }
         
         // Update balance for new network
@@ -432,13 +446,23 @@ export const Web3Provider = ({ children }) => {
     try {
       console.log('[Web3Context] Synchronizing state...');
       
+      // Ensure provider uses "any" network to accept chain switches
+      const current = providerRef.current;
+      const web3Provider = new ethers.providers.Web3Provider(
+        current.provider ?? current,
+        'any'
+      );
+      providerRef.current = web3Provider;
+      libraryRef.current = web3Provider;
+      signerRef.current = web3Provider.getSigner();
+      
       // Update balance
-      const balanceWei = await providerRef.current.getBalance(account);
+      const balanceWei = await web3Provider.getBalance(account);
       const balanceEth = ethers.utils.formatEther(balanceWei);
       setBalance(balanceEth);
       
       // Update network info
-      const network = await providerRef.current.getNetwork();
+      const network = await web3Provider.getNetwork();
       setChainId(network.chainId);
       setNetworkId(network.chainId.toString());
       

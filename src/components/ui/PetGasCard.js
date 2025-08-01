@@ -10,6 +10,7 @@ const PetGasCard = ({
   variant = 'default', // 'default', 'gradient', 'dark'
   className = '',
   hover = true,
+  glowing, // transient prop for styling, do not forward to DOM
   ...props
 }) => {
   // Variant styles
@@ -46,11 +47,18 @@ const PetGasCard = ({
     backdrop-blur-sm
     relative overflow-hidden
   `;
+  
+  // Optional glowing effect styling (do not forward prop to DOM)
+  const glowStyles = glowing ? `
+    ring-1 ring-petgas-gold/30
+    shadow-[0_0_25px_rgba(255,215,0,0.15)]
+  ` : '';
 
   const cardClasses = `
     ${baseStyles}
     ${variantStyles[variant]}
     ${hoverStyles}
+    ${glowStyles}
     ${className}
   `;
 

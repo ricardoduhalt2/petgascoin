@@ -137,12 +137,15 @@ const Dashboard = () => {
           <header className="flex flex-col md:flex-row md:items-center md:justify-between">
             <div>
               <div className="flex items-center mb-2">
-                <PetGasText variant="gradient" size="3xl">
-                  PetgasCoin Dashboard
-                </PetGasText>
-                <span className="ml-3 text-xs font-bold text-petgas-gold bg-petgas-gold/10 px-2 py-1 rounded-full border border-petgas-gold/30 animate-pulse">
-                  V1.3
-                </span>
+                <div className="flex items-center justify-center gap-3">
+                  <PetGasText variant="gradient" size="3xl">
+                    PetgasCoin Dashboard
+                  </PetGasText>
+                  <span className="text-xs font-bold text-petgas-gold bg-petgas-gold/10 px-2 py-1 rounded-full border border-petgas-gold/30">
+                    V1.4
+                  </span>
+                </div>
+                
               </div>
               <p className="text-petgas-text-gray">
                 Track and manage your PGC tokens on Binance Smart Chain
