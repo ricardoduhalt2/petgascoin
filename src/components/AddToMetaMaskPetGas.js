@@ -105,6 +105,16 @@ const AddToMetaMaskPetGas = ({ className = '', size = 'medium' }) => {
 
   // Handle adding token to MetaMask
   const addTokenToMetaMask = useCallback(async () => {
+    console.log('[AddToMetaMask] Starting token addition process...');
+    console.log('[AddToMetaMask] Current state:', {
+      isConnected,
+      account,
+      isWrongNetwork,
+      isMobile,
+      hasEthereum: !!window.ethereum,
+      chainId
+    });
+
     if (typeof window === 'undefined') {
       toast.error('This feature is only available in a browser environment');
       return;
@@ -125,6 +135,7 @@ const AddToMetaMaskPetGas = ({ className = '', size = 'medium' }) => {
     try {
       // Check if MetaMask is available
       if (!window.ethereum) {
+        console.log('[AddToMetaMask] No ethereum provider found');
         // On mobile, try to open MetaMask app
         if (isMobile) {
           const metamaskAppDeepLink = `https://metamask.app.link/dapp/${window.location.host}${window.location.pathname}`;
@@ -136,6 +147,9 @@ const AddToMetaMaskPetGas = ({ className = '', size = 'medium' }) => {
         }
         return;
       }
+
+      console.log('[AddToMetaMask] Ethereum provider found, attempting to add token...');
+      console.log('[AddToMetaMask] Token details:', PGC_TOKEN);
 
       // Add token to MetaMask
       const wasAdded = await window.ethereum.request({
@@ -152,12 +166,14 @@ const AddToMetaMaskPetGas = ({ className = '', size = 'medium' }) => {
         },
       });
 
+      console.log('[AddToMetaMask] Token addition result:', wasAdded);
+
       if (wasAdded) {
         toast.success('🎉 PGC token added to MetaMask!', {
           duration: 4000,
           style: {
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-            color: 'white',
+            background: 'linear-gradient(135deg, #FFD700, #FFA500)',
+            color: 'black',
             fontWeight: 'bold'
           }
         });
@@ -171,7 +187,12 @@ const AddToMetaMaskPetGas = ({ className = '', size = 'medium' }) => {
         });
       }
     } catch (error) {
-      console.error('Error adding token to MetaMask:', error);
+      console.error('[AddToMetaMask] Error adding token to MetaMask:', error);
+      console.error('[AddToMetaMask] Error details:', {
+        code: error.code,
+        message: error.message,
+        data: error.data
+      });
       
       let errorMessage = 'Failed to add PGC token';
       if (error.code === 4001) {
@@ -180,6 +201,8 @@ const AddToMetaMaskPetGas = ({ className = '', size = 'medium' }) => {
         errorMessage = 'Invalid parameters provided to MetaMask';
       } else if (error.code === -32603) {
         errorMessage = 'Internal JSON-RPC error in MetaMask';
+      } else if (error.code === -32000) {
+        errorMessage = 'MetaMask internal error';
       } else if (error.message) {
         errorMessage = error.message;
       }
@@ -194,7 +217,7 @@ const AddToMetaMaskPetGas = ({ className = '', size = 'medium' }) => {
     } finally {
       setIsAdding(false);
     }
-  }, [isConnected, account, isWrongNetwork, isMobile]);
+  }, [isConnected, account, isWrongNetwork, isMobile, chainId]);
 
   // Size variants
   const sizeClasses = {

@@ -1,4 +1,5 @@
 import React from 'react';
+import PetGasFormExample from '../src/components/examples/PetGasFormExample';
 
 export default function DesignSystemTest() {
   return (
@@ -199,6 +200,14 @@ export default function DesignSystemTest() {
               <p className="text-petgas-text-white petgas-text-sm mt-2">Space 16 (64px)</p>
             </div>
           </div>
+        </section>
+
+        {/* Form Components */}
+        <section className="space-y-6">
+          <h2 className="petgas-gradient-text petgas-text-4xl petgas-font-bold">
+            Form Components
+          </h2>
+          <PetGasFormExample />
         </section>
 
         {/* Footer */}

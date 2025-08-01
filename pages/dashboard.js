@@ -5,7 +5,7 @@ import { useTokenData } from '../src/hooks/useTokenData';
 import Head from 'next/head';
 import WalletCard from '../src/components/WalletCard';
 import TokenInfo from '../src/components/TokenInfo';
-import AddToMetaMask from '../src/components/AddToMetaMask';
+import AddToMetaMaskPetGas from '../src/components/AddToMetaMaskPetGas';
 import Chart from '../src/components/Chart';
 import ContractAddress from '../src/components/ContractAddress';
 import WalletTokenCard from '../src/components/WalletTokenCard';
@@ -220,7 +220,7 @@ const Dashboard = () => {
                 >
                   {tokenDataLoading ? 'Refreshing...' : 'Refresh'}
                 </button>
-                <AddToMetaMask tokenInfo={displayTokenInfo} />
+                <AddToMetaMaskPetGas size="medium" />
               </div>
             </div>
             

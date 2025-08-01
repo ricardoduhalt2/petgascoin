@@ -274,35 +274,40 @@ const ConnectWalletFixed = ({ redirectToDashboard = false }) => {
     return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
   };
 
-  // Handle MetaMask connection optimized for mobile
+  // Handle MetaMask connection optimized for mobile & desktop
   const handleMetaMaskConnect = async () => {
     console.log('[ConnectWalletFixed] MetaMask connect clicked');
     setWalletType('metamask');
     setLocalIsConnecting(true);
     setCurrentError(null);
     clearError();
-    
+
     try {
       const isMobile = isMobileDevice();
-      
-      // Check if MetaMask is available
-      if (!window.ethereum) {
+
+      // Prefer injected provider when available (desktop extension or mobile in-app browser)
+      const hasInjected = typeof window !== 'undefined' && window.ethereum;
+
+      if (!hasInjected) {
         if (isMobile) {
-          // On mobile, redirect to MetaMask app or app store
-          const metamaskAppUrl = `https://metamask.app.link/dapp/${window.location.host}${window.location.pathname}`;
+          // Mobile deep-link to MetaMask app with current dapp URL
+          const host = typeof window !== 'undefined' ? window.location.host : '';
+          const path = typeof window !== 'undefined' ? window.location.pathname : '';
+          const metamaskAppUrl = `https://metamask.app.link/dapp/${host}${path}`;
           toast.error('MetaMask not detected. Opening MetaMask app...', { duration: 3000 });
           window.open(metamaskAppUrl, '_blank');
           return;
-        } else {
-          // On desktop, show installation message
-          toast.error('Please install MetaMask extension', { duration: 4000 });
-          window.open('https://metamask.io/download/', '_blank');
-          return;
         }
+        // Desktop: guide to install the extension
+        toast.error('Please install MetaMask extension', { duration: 4000 });
+        window.open('https://metamask.io/download/', '_blank');
+        return;
       }
 
+      // Desktop or mobile with injected provider: request connection
+      // This will trigger the browser extension popup on desktop
       const success = await connect('metamask');
-      
+
       if (success) {
         console.log('[ConnectWalletFixed] MetaMask connected successfully');
         toast.success('Connected to MetaMask!');
@@ -312,12 +317,12 @@ const ConnectWalletFixed = ({ redirectToDashboard = false }) => {
       }
     } catch (error) {
       console.error('[ConnectWalletFixed] Error connecting MetaMask:', error);
-      
+
       const processedError = errorHandler.handleError(error, {
         component: 'ConnectWalletFixed',
         operation: 'connect-metamask'
       });
-      
+
       setCurrentError(processedError.userMessage || error.message);
     } finally {
       setLocalIsConnecting(false);

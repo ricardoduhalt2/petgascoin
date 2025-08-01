@@ -458,6 +458,139 @@ body {
   }
 }
 
+/* === FORM COMPONENT STYLES === */
+
+/* PetGas Input Base Styles */
+.petgas-input-container {
+  position: relative;
+}
+
+.petgas-input-container input {
+  font-family: var(--petgas-font-primary);
+}
+
+.petgas-input-container input::placeholder {
+  color: var(--petgas-text-muted);
+  opacity: 0.7;
+}
+
+.petgas-input-container input:focus::placeholder {
+  opacity: 0.5;
+}
+
+/* PetGas Textarea Base Styles */
+.petgas-textarea-container {
+  position: relative;
+}
+
+.petgas-textarea-container textarea {
+  font-family: var(--petgas-font-primary);
+  line-height: var(--petgas-leading-relaxed);
+}
+
+.petgas-textarea-container textarea::placeholder {
+  color: var(--petgas-text-muted);
+  opacity: 0.7;
+}
+
+.petgas-textarea-container textarea:focus::placeholder {
+  opacity: 0.5;
+}
+
+/* Form Field Spacing */
+.petgas-form-field {
+  margin-bottom: var(--petgas-space-6);
+}
+
+.petgas-form-field:last-child {
+  margin-bottom: 0;
+}
+
+/* Form Submit Button */
+.petgas-form-submit {
+  position: relative;
+  overflow: hidden;
+}
+
+.petgas-form-submit::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  transition: left 0.5s;
+}
+
+.petgas-form-submit:hover::before {
+  left: 100%;
+}
+
+/* Form Error Styles */
+.petgas-form-errors {
+  margin-bottom: var(--petgas-space-6);
+}
+
+/* Input Focus Ring Animation */
+@keyframes petgas-focus-ring {
+  0% {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.02);
+  }
+  100% {
+    opacity: 0.8;
+    transform: scale(1);
+  }
+}
+
+.petgas-input-container input:focus + .focus-ring,
+.petgas-textarea-container textarea:focus + .focus-ring {
+  animation: petgas-focus-ring 0.3s ease-out;
+}
+
+/* Golden Glow Effect */
+@keyframes petgas-golden-glow {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(255, 215, 0, 0.5);
+  }
+}
+
+.petgas-input-container input:focus,
+.petgas-textarea-container textarea:focus {
+  animation: petgas-golden-glow 2s ease-in-out infinite;
+}
+
+/* Validation State Transitions */
+.petgas-input-container,
+.petgas-textarea-container {
+  transition: all var(--petgas-transition-base);
+}
+
+.petgas-input-container input,
+.petgas-textarea-container textarea {
+  transition: all var(--petgas-transition-base);
+}
+
+/* Success State Glow */
+.petgas-input-container input[data-success="true"],
+.petgas-textarea-container textarea[data-success="true"] {
+  box-shadow: 0 0 20px rgba(34, 197, 94, 0.3);
+}
+
+/* Error State Glow */
+.petgas-input-container input[data-error="true"],
+.petgas-textarea-container textarea[data-error="true"] {
+  box-shadow: 0 0 20px rgba(239, 68, 68, 0.3);
+}
+
 /* === PRINT STYLES === */
 @media print {
   .petgas-gradient-text,
