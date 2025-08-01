@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useWeb3 } from '../contexts/Web3Context';
+import { useRouter } from 'next/router';
 import WalletCard from './WalletCard';
 import GoldenParticles from './ui/GoldenParticles';
 import { CONTRACTS, IS_TESTNET, NETWORKS } from '../config.js';
@@ -13,6 +14,57 @@ export default function Web3DependentComponents() {
     error,
     isWrongNetwork
   } = useWeb3();
+  const router = useRouter();
+
+  // Smart redirect supervisor: observa conexión y red, con backoff y timeout
+  const redirectingRef = useRef(false);
+  const backoffRef = useRef(500);
+  const timeoutRef = useRef(null);
+
+  function safeClearTimeout() {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+  }
+
+  useEffect(() => {
+    // Cuando el usuario está conectado y no hay red equivocada, intentamos redirigir
+    if (isConnected && !isWrongNetwork && !redirectingRef.current) {
+      redirectingRef.current = true;
+
+      // Intento inmediato
+      router.push('/dashboard').catch(() => {});
+
+      // Supervisor con reintentos exponenciales por si el árbol de React todavía no está listo
+      const attemptRedirect = () => {
+        // Si ya estamos en /dashboard, detener
+        if (typeof window !== 'undefined' && window.location.pathname === '/dashboard') {
+          redirectingRef.current = false;
+          return;
+        }
+        router.push('/dashboard').catch(() => {});
+        // Aumenta el backoff hasta ~5s máximo
+        backoffRef.current = Math.min(backoffRef.current * 2, 5000);
+        timeoutRef.current = setTimeout(attemptRedirect, backoffRef.current);
+      };
+
+      // Programa reintentos suaves (750ms, 1.5s, 3s, 5s)
+      safeClearTimeout();
+      timeoutRef.current = setTimeout(attemptRedirect, 750);
+    }
+
+    // Si se desconecta o hay red equivocada, cancela intentos
+    if ((!isConnected || isWrongNetwork) && redirectingRef.current) {
+      redirectingRef.current = false;
+      backoffRef.current = 500;
+      safeClearTimeout();
+    }
+
+    return () => {
+      safeClearTimeout();
+    };
+  }, [isConnected, isWrongNetwork, router]);
 
   // helper: open WalletConnect QR via web3Modal config if available
   async function connectWithWalletConnect() {
@@ -168,20 +220,61 @@ export default function Web3DependentComponents() {
               Connect Wallet
             </h2>
             <p className="text-petgas-text-gray petgas-text-sm">
-              Choose your preferred wallet to get started
+              Smart connect for desktop & mobile
             </p>
           </div>
-          
-          {/* MetaMask (PGC dark + gold) */}
+
+          {/* Botón único inteligente con redirect asistido por IA (supervisor de estado) */}
           <button
             onClick={async () => {
               try {
-                await connect(); // usa MetaMask si está disponible
+                const isMobile = typeof window !== 'undefined' && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+                const hasMM = typeof window !== 'undefined' && window.ethereum && window.ethereum.isMetaMask;
+
+                // Lock para evitar doble disparo de conexiones
+                if (redirectingRef.current) {
+                  // Si ya se inició secuencia de redirect, forzamos un push adicional
+                  router.push('/dashboard').catch(() => {});
+                  return;
+                }
+
+                // 1) Desktop con MetaMask -> usa MetaMask
+                if (!isMobile && hasMM) {
+                  await connect();
+                } else if (!isMobile && !hasMM) {
+                  // 2) Desktop sin MetaMask -> WalletConnect QR
+                  await connectWithWalletConnect();
+                } else if (isMobile && hasMM) {
+                  // 3) Mobile con MetaMask -> deep-link
+                  const dappUrl = window.location.origin;
+                  window.open(`https://metamask.app.link/dapp/${dappUrl.replace(/^https?:\/\//, '')}`, '_blank');
+                } else {
+                  // 4) Mobile sin MetaMask -> WalletConnect
+                  await connectWithWalletConnect();
+                }
+
+                // Tras iniciar conexión, programa redirect inmediato y bajo supervisión
+                redirectingRef.current = true;
+                backoffRef.current = 500;
+                router.push('/dashboard').catch(() => {});
+                safeClearTimeout();
+                timeoutRef.current = setTimeout(function retry() {
+                  if (typeof window !== 'undefined' && window.location.pathname === '/dashboard') {
+                    redirectingRef.current = false;
+                    return;
+                  }
+                  router.push('/dashboard').catch(() => {});
+                  backoffRef.current = Math.min(backoffRef.current * 2, 5000);
+                  timeoutRef.current = setTimeout(retry, backoffRef.current);
+                }, 600);
               } catch (e) {
-                console.error('MetaMask connect failed', e);
+                console.error('Smart connect failed', e);
+                // Fallback final con intento de redirect si ya hay sesión activa
+                try { await connect(); } catch {}
+                router.push('/dashboard').catch(() => {});
               }
             }}
-            className="w-full relative flex items-center justify-center gap-2 text-pgc-black font-semibold py-3 px-4 rounded-lg border transition
+            className="w-full relative flex items-center justify-center gap-3 text-pgc-black font-semibold py-3 px-4 rounded-lg border transition
                        hover:-translate-y-0.5 active:translate-y-0 focus:outline-none"
             style={{
               background: 'linear-gradient(135deg, #E5B80B 0%, #FACC15 50%, #E5B80B 100%)',
@@ -190,59 +283,18 @@ export default function Web3DependentComponents() {
             }}
           >
             <img
-              src={typeof window !== 'undefined' ? (new URL('/images/metamask-fox.svg', window.location.origin)).toString() : '/images/metamask-fox.svg'}
-              onError={(e) => {
-                // fallback a URL pública si no existe el asset local
-                e.currentTarget.src = 'https://raw.githubusercontent.com/MetaMask/brand-resources/master/SVG/metamask-fox.svg';
-              }}
-              alt="MetaMask"
+              src="/images/metamask-fox.svg"
+              onError={(e) => { e.currentTarget.style.display = 'none'; }}
+              alt="Wallet"
               className="h-5 w-5"
             />
-            <span className="tracking-wide">Connect with MetaMask</span>
+            <span className="tracking-wide">Connect Wallet</span>
             <span className="absolute inset-0 rounded-lg ring-1 ring-yellow-200/30 pointer-events-none" />
           </button>
 
-          {/* WalletConnect para móviles (QR / deep link) */}
-          <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {/* WalletConnect QR (desktop) / deep link (mobile) */}
-            <button
-              onClick={async () => {
-                // Desktop: intentamos abrir modal QR via web3Modal si está disponible
-                const isMobile = typeof window !== 'undefined' && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-                if (!isMobile) {
-                  await connectWithWalletConnect();
-                  return;
-                }
-                // Mobile: deep-link MetaMask Mobile (si está)
-                try {
-                  if (typeof window !== 'undefined' && window.ethereum && window.ethereum.isMetaMask) {
-                    const dappUrl = window.location.origin;
-                    window.open(`https://metamask.app.link/dapp/${dappUrl.replace(/^https?:\/\//, '')}`, '_blank');
-                  } else {
-                    await connectWithWalletConnect();
-                  }
-                } catch (e) {
-                  console.error('WalletConnect/mobile fallback failed', e);
-                }
-              }}
-              className="w-full flex items-center justify-center gap-2 bg-pgc-black text-petgas-text-white font-semibold py-3 px-4 rounded-lg border border-pgc-gold/40 hover:border-pgc-gold hover:shadow-petgas-glow transition"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-petgas-gold" viewBox="0 0 32 32" fill="currentColor">
-                <path d="M24.5 12.6c-1.6-1.6-4.1-1.6-5.6 0l-.9.9-.9-.9c-1.6-1.6-4.1-1.6-5.6 0-1.5 1.5-1.6 3.9-.2 5.5l3.6 3.9c.5.5 1.2.8 2 .8.8 0 1.5-.3 2-.8l3.6-3.9c1.3-1.6 1.2-4-.2-5.5z"/>
-              </svg>
-              <span>WalletConnect / Mobile</span>
-            </button>
-
-            {/* Alternativas/otros wallets */}
-            <div className="w-full">
-              <WalletCard 
-                redirectToDashboard={true}
-                account={account}
-                isConnected={isConnected}
-                onConnect={connect}
-                isWrongNetwork={isWrongNetwork}
-              />
-            </div>
+          {/* Hint contextual */}
+          <div className="mt-3 text-center text-petgas-text-muted petgas-text-xs">
+            Auto-detecta MetaMask o abre QR (WalletConnect) según tu dispositivo
           </div>
         </div>
 

@@ -102,11 +102,14 @@ const Dashboard = () => {
 
   // Show loading screen while checking client-side or authentication
   if (!isClient || isCheckingAuth) {
+    // Evita quedarse colgado en la pantalla de carga: renderiza contenedor mínimo y no bloquea el estado
     return (
-      <PetGasLoadingScreen 
-        message={!isClient ? 'Initializing PetgasCoin DApp...' : 'Checking wallet connection...'}
-        subMessage={!isClient ? 'Loading blockchain interface' : 'Verifying your wallet status'}
-      />
+      <div className="min-h-screen bg-pgc-dark text-pgc-text flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-yellow-400 mx-auto mb-3"></div>
+          <div className="text-sm text-petgas-text-gray">Connecting to the blockchain...</div>
+        </div>
+      </div>
     );
   }
 
@@ -121,7 +124,7 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-petgas-black">
+    <div className="min-h-screen bg-pgc-dark text-pgc-text">
       <Head>
         <title>Petgascoin Dashboard</title>
         <meta name="description" content="Petgascoin Dashboard - Track your PGC tokens" />
@@ -145,8 +148,21 @@ const Dashboard = () => {
                 Track and manage your PGC tokens on Binance Smart Chain
               </p>
             </div>
-            <div className="mt-4 md:mt-0">
+            <div className="mt-4 md:mt-0 flex items-center space-x-3">
               <WalletCard />
+              {/* Add PGC to MetaMask - destacado en header con colores PGC */}
+              <div className="relative">
+                <AddToMetaMaskPetGas
+                  size="large"
+                  className="!px-4 !py-2 !rounded-lg !font-semibold !text-pgc-black border transition hover:-translate-y-0.5 active:translate-y-0"
+                  style={{
+                    background: 'linear-gradient(135deg, #E5B80B 0%, #FACC15 50%, #E5B80B 100%)',
+                    borderColor: '#FACC15',
+                    boxShadow: '0 0 0 2px rgba(250, 204, 21, 0.25), 0 10px 25px rgba(250, 204, 21, 0.20)'
+                  }}
+                />
+                <span className="pointer-events-none absolute inset-0 rounded-lg ring-1 ring-yellow-200/30" />
+              </div>
             </div>
           </header>
 
@@ -173,92 +189,59 @@ const Dashboard = () => {
             </PetGasCard>
           ) : null}
 
-          {/* Token Information Card - Principal y más grande */}
-          <PetGasCard title="Token Information" glowing className="mb-8">
-            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-6">
-              <div className="flex items-center mb-4 lg:mb-0">
-                <img 
-                  src={displayTokenInfo.logoURI} 
-                  alt={`${displayTokenInfo.name} logo`} 
-                  className="h-16 w-16 rounded-full mr-6 border-2 border-yellow-500/30"
-                />
-                <div>
-                  <PetGasText variant="gradient" size="2xl" className="mb-1">
-                    {displayTokenInfo.name} ({displayTokenInfo.symbol})
-                  </PetGasText>
-                  <div className="flex items-center space-x-4">
-                    <a 
-                      href={displayTokenInfo.bscScanUrl} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="text-sm text-yellow-400 hover:text-yellow-300 transition-colors flex items-center"
-                    >
-                      View on BscScan
-                      <svg className="w-3 h-3 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                      </svg>
-                    </a>
-                    {tokenDataLoading && (
-                      <div className="flex items-center text-xs text-gray-400">
-                        <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-yellow-400 mr-1"></div>
-                        Updating...
-                      </div>
-                    )}
-                    {lastUpdated && !tokenDataLoading && (
-                      <div className="text-xs text-gray-400">
-                        Updated: {lastUpdated.toLocaleTimeString()}
-                      </div>
-                    )}
+          {/* Token Information Card - look & feel PGC */}
+          <div className="mb-8 rounded-2xl border border-pgc-gold/30 shadow-[0_0_0_2px_rgba(250,204,21,0.06)] bg-gradient-to-br from-pgc-carbon to-pgc-black">
+            <div className="px-6 pt-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <div className="w-16 h-16 rounded-full flex items-center justify-center mr-4" style={{ background: 'linear-gradient(135deg,#E5B80B,#FACC15)' }}>
+                    <span className="text-pgc-black font-extrabold">PGC</span>
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-bold text-white">Token Information</h2>
+                    <p className="text-sm text-pgc-muted">Real-time on-chain + BscScan (cached)</p>
+                  </div>
+                </div>
+                <span className="ml-3 text-xs font-bold text-pgc-black px-2 py-1 rounded-full border" style={{ background: 'linear-gradient(135deg,#E5B80B,#FACC15)', borderColor: '#FACC15' }}>
+                  V1.2
+                </span>
+              </div>
+            </div>
+            <div className="p-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div className="rounded-lg p-4 border border-pgc-gold/20 bg-gradient-to-br from-pgc-black to-pgc-carbon">
+                  <div className="text-sm text-pgc-muted mb-1">Total Supply</div>
+                  <div className="text-xl font-bold text-white">
+                    {tokenInfo?.totalSupply ? 
+                      `${parseFloat(tokenInfo.totalSupply).toLocaleString()} ${displayTokenInfo.symbol}` : 
+                      tokenDataLoading ? 'Loading...' : '330,000,000,000 PGC'
+                    }
+                  </div>
+                </div>
+                <div className="rounded-lg p-4 border border-pgc-gold/20 bg-gradient-to-br from-pgc-black to-pgc-carbon">
+                  <div className="text-sm text-pgc-muted mb-1">Contract</div>
+                  <div className="text-sm font-mono text-white/90 break-all">
+                    {displayTokenInfo.contractAddress}
+                  </div>
+                </div>
+                <div className="rounded-lg p-4 border border-pgc-gold/20 bg-gradient-to-br from-pgc-black to-pgc-carbon">
+                  <div className="text-sm text-pgc-muted mb-1">Decimals</div>
+                  <div className="text-xl font-bold text-white">
+                    {tokenInfo?.decimals || displayTokenInfo.decimals}
                   </div>
                 </div>
               </div>
-              <div className="flex-shrink-0 flex items-center space-x-3">
-                <button
-                  onClick={refreshTokenData}
-                  disabled={tokenDataLoading}
-                  className="px-3 py-1 text-xs bg-gray-700 hover:bg-gray-600 text-white rounded-md transition-colors disabled:opacity-50"
-                  title="Refresh token data"
-                >
-                  {tokenDataLoading ? 'Refreshing...' : 'Refresh'}
-                </button>
-                <AddToMetaMaskPetGas size="medium" />
+
+              {/* Enhanced Token Info Card with live on-chain + extended stats */}
+              <div className="mt-2">
+                <TokenInfoCard
+                  account={account}
+                  isConnected={isConnected}
+                  isWrongNetwork={isWrongNetwork}
+                />
               </div>
             </div>
-            
-            {/* Real-time token stats */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-              <div className="bg-petgas-gray/50 rounded-lg p-4 border border-petgas-gold/20">
-                <div className="text-sm text-petgas-text-gray mb-1">Total Supply</div>
-                <div className="text-xl font-bold text-petgas-text-white">
-                  {tokenInfo?.totalSupply ? 
-                    `${parseFloat(tokenInfo.totalSupply).toLocaleString()} ${displayTokenInfo.symbol}` : 
-                    tokenDataLoading ? 'Loading...' : '330,000,000,000 PGC'
-                  }
-                </div>
-              </div>
-              <div className="bg-petgas-gray/50 rounded-lg p-4 border border-petgas-gold/20">
-                <div className="text-sm text-petgas-text-gray mb-1">Contract</div>
-                <div className="text-sm font-mono text-petgas-text-white break-all">
-                  {displayTokenInfo.contractAddress}
-                </div>
-              </div>
-              <div className="bg-petgas-gray/50 rounded-lg p-4 border border-petgas-gold/20">
-                <div className="text-sm text-petgas-text-gray mb-1">Decimals</div>
-                <div className="text-xl font-bold text-petgas-text-white">
-                  {tokenInfo?.decimals || displayTokenInfo.decimals}
-                </div>
-              </div>
-            </div>
-            
-            {/* Enhanced Token Info Card with live on-chain + extended stats */}
-            <div className="mt-6">
-              <TokenInfoCard
-                account={account}
-                isConnected={isConnected}
-                isWrongNetwork={isWrongNetwork}
-              />
-            </div>
-          </PetGasCard>
+          </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Left Column - Chart */}
