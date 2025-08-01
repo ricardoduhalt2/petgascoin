@@ -5,6 +5,7 @@ import { useTokenData } from '../src/hooks/useTokenData';
 import Head from 'next/head';
 import WalletCard from '../src/components/WalletCard';
 import TokenInfo from '../src/components/TokenInfo';
+import TokenInfoCard from '../src/components/TokenInfoCard';
 import AddToMetaMaskPetGas from '../src/components/AddToMetaMaskPetGas';
 import Chart from '../src/components/Chart';
 import ContractAddress from '../src/components/ContractAddress';
@@ -137,7 +138,7 @@ const Dashboard = () => {
                   PetgasCoin Dashboard
                 </PetGasText>
                 <span className="ml-3 text-xs font-bold text-petgas-gold bg-petgas-gold/10 px-2 py-1 rounded-full border border-petgas-gold/30 animate-pulse">
-                  V1.1
+                  V1.2
                 </span>
               </div>
               <p className="text-petgas-text-gray">
@@ -249,7 +250,14 @@ const Dashboard = () => {
               </div>
             </div>
             
-            <TokenInfo tokenData={tokenData} />
+            {/* Enhanced Token Info Card with live on-chain + extended stats */}
+            <div className="mt-6">
+              <TokenInfoCard
+                account={account}
+                isConnected={isConnected}
+                isWrongNetwork={isWrongNetwork}
+              />
+            </div>
           </PetGasCard>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

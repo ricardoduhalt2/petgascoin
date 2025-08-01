@@ -11,7 +11,7 @@ import { ERC20_ABI } from '../config';
 // PGC Token Contract Address
 const PGC_CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_PGC_TOKEN_CONTRACT || '0x46617e7bca14de818d9E5cFf2aa106b72CB33fe3';
 const BSCSCAN_API_KEY = process.env.NEXT_PUBLIC_BSCSCAN_API_KEY;
-const BSC_RPC_URL = process.env.NEXT_PUBLIC_BSC_MAINNET_RPC_URL || 'https://bsc-dataseed.binance.org/';
+const BSC_RPC_URL = process.env.NEXT_PUBLIC_BSC_MAINNET_RPC_URL || '';
 
 /**
  * Token Data Service Class
@@ -34,11 +34,29 @@ export class TokenDataService {
    */
   initializeProvider() {
     try {
-      this.provider = new ethers.providers.JsonRpcProvider(this.rpcUrl);
-      this.contract = new ethers.Contract(this.contractAddress, ERC20_ABI, this.provider);
-      console.log('[TokenDataService] Provider and contract initialized');
+      // Avoid direct browser calls to public RPCs to prevent CORS in localhost.
+      // If running in the browser, route through our Next.js API which does server-side RPC.
+      if (typeof window !== 'undefined') {
+        // Create a lightweight proxy provider using our API for reads where possible.
+        // For this service, instead of initializing a browser-side JsonRpcProvider that hits CORS endpoints,
+        // we skip provider here and let UI use our API routes (/api/token-stats, /api/token-extended).
+        this.provider = null;
+        this.contract = null;
+        console.warn('[TokenDataService] Skipping direct RPC in browser to avoid CORS; use server APIs instead');
+      } else {
+        // Node/server-side can use RPC safely
+        const url = this.rpcUrl || 'https://bsc.publicnode.com';
+        this.provider = new ethers.providers.JsonRpcProvider(url, {
+          name: 'binance-smart-chain',
+          chainId: 56,
+        });
+        this.contract = new ethers.Contract(this.contractAddress, ERC20_ABI, this.provider);
+        console.log('[TokenDataService] Provider and contract initialized (server-side)');
+      }
     } catch (error) {
       console.error('[TokenDataService] Error initializing provider:', error);
+      this.provider = null;
+      this.contract = null;
     }
   }
 
@@ -74,6 +92,25 @@ export class TokenDataService {
     try {
       console.log('[TokenDataService] Fetching REAL token info from blockchain...');
       
+      if (!this.contract) {
+        // Fallback to server API if no contract (browser)
+        const origin = typeof window !== 'undefined' ? window.location.origin : '';
+        const res = await fetch(`${origin}/api/token-extended`);
+        const data = await res.json();
+        const tokenInfo = {
+          name: 'Petgascoin',
+          symbol: 'PGC',
+          decimals: data?.decimals ?? 18,
+          totalSupply: data?.totalSupply ?? '330000000000',
+          contractAddress: this.contractAddress,
+          logoUrl: 'https://bscscan.com/token/images/petgas_32.png?v=2',
+          bscScanUrl: `https://bscscan.com/token/${this.contractAddress}`,
+          source: 'api-token-extended',
+        };
+        this.setCachedData(cacheKey, tokenInfo);
+        return tokenInfo;
+      }
+
       const [name, symbol, decimals, totalSupply] = await Promise.all([
         this.contract.name(),
         this.contract.symbol(),
@@ -126,6 +163,10 @@ export class TokenDataService {
     try {
       console.log('[TokenDataService] Fetching token balance for:', address);
       
+      if (!this.contract) {
+        // If no direct RPC (browser), return null and let UI show from API components
+        throw new Error('No direct RPC provider available in browser');
+      }
       const balance = await this.contract.balanceOf(address);
       const decimals = await this.contract.decimals();
       const formattedBalance = ethers.utils.formatUnits(balance, decimals);

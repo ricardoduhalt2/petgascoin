@@ -90,6 +90,17 @@ module.exports = {
           'text-muted': 'var(--petgas-text-muted)',
           'text-gray': 'var(--petgas-text-gray)',
         },
+        // PGC site look & feel
+        pgc: {
+          black: '#0B0B0F',
+          carbon: '#121216',
+          gold: '#E5B80B',
+          gold2: '#FACC15',
+          gray: '#1a1a1f',
+          'gray-2': '#23232a',
+          'text': '#e5e7eb',
+          'muted': '#9ca3af',
+        },
       },
       backgroundImage: {
         'petgas-gradient-primary': 'var(--petgas-gradient-primary)',
@@ -101,6 +112,9 @@ module.exports = {
         'petgas-gradient-overlay': 'var(--petgas-gradient-overlay)',
         'petgas-gradient-radial': 'var(--petgas-gradient-radial)',
         'petgas-gradient-glow': 'var(--petgas-gradient-glow)',
+        // PGC gradients
+        'pgc-gold': 'linear-gradient(135deg, #E5B80B 0%, #FACC15 50%, #E5B80B 100%)',
+        'pgc-dark': 'linear-gradient(180deg, #0B0B0F 0%, #121216 100%)',
       },
       spacing: {
         '0': 'var(--petgas-space-0)',
