@@ -153,7 +153,8 @@ export class TokenDataService {
    */
   async getTokenBalance(address) {
     if (!address || !ethers.utils.isAddress(address)) {
-      throw new Error('Invalid address provided');
+      // graceful: no throw to avoid UI loops
+      return { raw: '0', formatted: '0', decimals: 18, address: address || '' };
     }
 
     const cacheKey = `balance_${address}`;
@@ -162,27 +163,78 @@ export class TokenDataService {
 
     try {
       console.log('[TokenDataService] Fetching token balance for:', address);
-      
-      if (!this.contract) {
-        // If no direct RPC (browser), return null and let UI show from API components
-        throw new Error('No direct RPC provider available in browser');
+
+      // Prefer provider from window.ethereum if present (connected wallet) to avoid CORS
+      if (typeof window !== 'undefined' && window.ethereum) {
+        try {
+          // Hard-code BSC chain params to avoid Phantom/Safe/WC canary issues on detectNetwork
+          const CHAIN_ID_HEX = '0x38'; // 56
+          const CHAIN_ID_DEC = 56;
+
+          // Ensure we are on BSC; if not, request switch (non-blocking)
+          try {
+            await window.ethereum.request({
+              method: 'wallet_switchEthereumChain',
+              params: [{ chainId: CHAIN_ID_HEX }],
+            });
+          } catch (_) {
+            // ignore; if wallet doesn't support switch, continue with current network
+          }
+
+          // Use Web3Provider but avoid immediate network detection by pre-checking chainId
+          const web3Provider = new ethers.providers.Web3Provider(window.ethereum, 'any');
+
+          // Workaround for Canary error from extension multiplexer (evmAsk): wrap first request with try/catch and retry once
+          const readContract = new ethers.Contract(this.contractAddress, ERC20_ABI, web3Provider);
+          let balance;
+          let decimals = 18;
+          try {
+            // First attempt
+            [balance, decimals] = await Promise.all([
+              readContract.balanceOf(address),
+              readContract.decimals().catch(() => 18),
+            ]);
+          } catch (err1) {
+            console.warn('[TokenDataService] balanceOf first attempt failed, retrying with signer', err1);
+            const signer = web3Provider.getSigner();
+            const readWithSigner = readContract.connect(signer);
+            // Short delay before retry to let extension settle
+            await new Promise(r => setTimeout(r, 250));
+            [balance, decimals] = await Promise.all([
+              readWithSigner.balanceOf(address),
+              readWithSigner.decimals().catch(() => 18),
+            ]);
+          }
+
+          const formattedBalance = ethers.utils.formatUnits(balance, decimals);
+          const balanceData = { raw: balance.toString(), formatted: formattedBalance, decimals, address };
+          this.setCachedData(cacheKey, balanceData);
+          return balanceData;
+        } catch (innerErr) {
+          console.error('[TokenDataService] window.ethereum balance fetch failed, falling back:', innerErr);
+          // do not throw; fall through to server/provider branch
+        }
       }
-      const balance = await this.contract.balanceOf(address);
-      const decimals = await this.contract.decimals();
-      const formattedBalance = ethers.utils.formatUnits(balance, decimals);
 
-      const balanceData = {
-        raw: balance.toString(),
-        formatted: formattedBalance,
-        decimals,
-        address
-      };
+      // Server-side (no window): use server RPC provider if available
+      if (this.contract) {
+        const [balance, decimals] = await Promise.all([
+          this.contract.balanceOf(address),
+          this.contract.decimals().catch(() => 18),
+        ]);
+        const formattedBalance = ethers.utils.formatUnits(balance, decimals);
+        const balanceData = { raw: balance.toString(), formatted: formattedBalance, decimals, address };
+        this.setCachedData(cacheKey, balanceData);
+        return balanceData;
+      }
 
-      this.setCachedData(cacheKey, balanceData);
-      return balanceData;
+      // Fallback: query via API route if exposed in future, else return zero without throwing
+      console.warn('[TokenDataService] No provider available; returning zero balance');
+      return { raw: '0', formatted: '0', decimals: 18, address };
     } catch (error) {
       console.error('[TokenDataService] Error fetching token balance:', error);
-      throw error;
+      // graceful fallback to avoid breaking UI/loops
+      return { raw: '0', formatted: '0', decimals: 18, address, error: error?.message };
     }
   }
 
