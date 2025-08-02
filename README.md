@@ -16,9 +16,9 @@
 
 Este proyecto implementa una DApp completa para el token PetgasCoin (PGC) en Binance Smart Chain con un sistema de diseño avanzado, experiencia mobile-first y conexión MetaMask optimizada.
 
-## 🚀 Estado Actual - Agosto 2025 (Versión 1.4.0)
+## 🚀 Estado Actual - Agosto 2025 (Versión 1.5.0)
 
-**✅ VERSIÓN 1.4 ACTUALIZADA** - Mejoras en la integración de WalletConnect y actualización del sistema de versionado.
+**✅ VERSIÓN 1.5 ACTUALIZADA** - Actualización de versión y mejoras en la documentación.
 
 ### 🎨 Cambios en la Versión 1.4 (Agosto 2025)
 - **✅ Actualización de versión** a V1.4 en toda la aplicación
@@ -340,32 +340,30 @@ La aplicación PetgasCoin DApp ahora funciona completamente con:
 - **V1.0** (Enero 2025) - Lanzamiento inicial con sistema de diseño PetGas completo, conexión MetaMask optimizada, datos reales de blockchain, y experiencia mobile-first
 
 #### Instrucciones para actualizar versión:
-## 🛠 Cambios en la Versión 1.4.0
+## 🛠 Cambios en la Versión 1.5.0
 
 ### Mejoras
-- Corregido el componente `AddToMetaMaskPetGas` para soportar tanto MetaMask como WalletConnect
-- Mejorada la experiencia de usuario en dispositivos móviles
-- Actualizados los mensajes de error para ser más descriptivos
-- Optimizado el rendimiento del componente
+- Actualización de versión a 1.5.0 en todos los componentes y constantes
+- Mejorada la consistencia del sistema de versionado
+- Actualizada la documentación del proyecto
+- Optimización de la estructura del proyecto
 
 ### Correcciones de Errores
-- Corregido el error `showTokenDetailsForManualAddition is not defined`
-- Solucionados problemas de sintaxis y estructura en el código
-- Eliminadas declaraciones duplicadas del componente
-- Corregida la exportación del módulo
+- Corregidos problemas de sincronización de versiones entre componentes
+- Asegurada la consistencia en los badges de versión
+- Actualizadas las referencias a versiones anteriores
 
 ### Cambios Técnicos
-- Actualizadas las dependencias a sus últimas versiones
-- Mejorado el manejo de errores en la conexión de billetera
-- Añadida validación de red (BSC Mainnet)
-- Implementado soporte para WalletConnect en dispositivos móviles
+- Actualizado el sistema de control de versiones
+- Mejorada la documentación técnica
+- Optimizado el proceso de actualización de versiones futuras
 
 ### Archivos Afectados
-- `src/components/AddToMetaMaskPetGas.js`
 - `src/config/constants.js`
 - `src/utils/constants.js`
 - `src/components/Web3DependentComponents.js`
 - `pages/dashboard.js`
+- `README.md`
 
 ### Próximos Pasos
 1. Probar exhaustivamente la funcionalidad en diferentes navegadores y dispositivos
@@ -381,7 +379,7 @@ La aplicación PetgasCoin DApp ahora funciona completamente con:
    - Actualizar el badge de versión en `src/components/Web3DependentComponents.js`
    - Actualizar el badge de versión en `pages/dashboard.js`
    - Actualizar esta sección del README con los cambios realizados
-   - Commit con mensaje: `chore: bump version to V1.4`
+   - Commit con mensaje: `chore: bump version to V1.5`
 
 ---
 

@@ -3,7 +3,7 @@
  */
 
 // Application Version
-export const APP_VERSION = '1.4.0';
+export const APP_VERSION = '1.5.0';
 
 // PGC Token Metadata
 export const PGC_TOKEN_METADATA = {

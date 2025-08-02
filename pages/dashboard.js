@@ -127,7 +127,7 @@ const Dashboard = () => {
                     PetgasCoin Dashboard
                   </PetGasText>
                   <span className="text-xs font-bold text-petgas-gold bg-petgas-gold/10 px-2 py-1 rounded-full border border-petgas-gold/30">
-                    V1.4
+                    V1.5
                   </span>
                 </div>
                 
@@ -191,7 +191,7 @@ const Dashboard = () => {
                   </div>
                 </div>
                 <span className="ml-3 text-xs font-bold text-pgc-black px-2 py-1 rounded-full border" style={{ background: 'linear-gradient(135deg,#E5B80B,#FACC15)', borderColor: '#FACC15' }}>
-                  V1.4
+                  V1.5
                 </span>
               </div>
             </div>

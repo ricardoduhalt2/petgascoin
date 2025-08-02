@@ -216,7 +216,7 @@ export default function Web3DependentComponents() {
               PetgasCoin
             </h1>
               <span className="ml-3 text-xs font-bold text-petgas-gold bg-petgas-gold/10 px-2 py-1 rounded-full border border-petgas-gold/30 animate-pulse">
-                V1.4
+                V1.5
               </span>
           </div>
           <p className="petgas-text-base text-petgas-text-light mb-2">
