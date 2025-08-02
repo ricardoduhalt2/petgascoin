@@ -5,10 +5,15 @@ import { mainnet, bsc } from 'wagmi/chains';
 const projectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || '71585499-cba3-4163-8cea-048090109d7e';
 
 // 2. Create wagmiConfig
+const isLocalhost = typeof window !== 'undefined' && 
+  (window.location.hostname === 'localhost' || 
+   window.location.hostname === '127.0.0.1' ||
+   window.location.hostname.startsWith('192.168.'));
+
 const metadata = {
   name: process.env.WALLETCONNECT_NAME || 'PetgasCoin DApp',
   description: process.env.WALLETCONNECT_DESCRIPTION || 'PetgasCoin Dashboard Connect',
-  url: process.env.WALLETCONNECT_URL || 'https://petgascoin.com',
+  url: isLocalhost ? window.location.origin : (process.env.WALLETCONNECT_URL || 'https://petgascoin.com'),
   icons: [process.env.WALLETCONNECT_ICONS || 'https://petgascoin.com/media/LogoPetgasCoinTransparent.png?w=256&q=90&f=webp']
 };
 

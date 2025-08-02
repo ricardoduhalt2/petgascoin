@@ -92,13 +92,13 @@ export default function Layout({ children }) {
                 </Link>
               ))}
               <div className="ml-4">
-                <ConnectWalletEnhanced />
+                <ConnectWalletEnhanced redirectToDashboard={true} />
               </div>
             </nav>
 
             {/* Mobile menu button */}
             <div className="flex md:hidden items-center">
-              <ConnectWalletEnhanced />
+              <ConnectWalletEnhanced redirectToDashboard={true} />
               <button
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
                 className="ml-4 inline-flex items-center justify-center p-2 rounded-md text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white focus:outline-none"

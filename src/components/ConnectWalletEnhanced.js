@@ -5,18 +5,19 @@
  * MetaMask and WalletConnect, improved UX, error handling, and responsive design.
  */
 
-import { useState, useEffect, useContext } from 'react';
+import { useState, useEffect, useContext, useCallback } from 'react';
 import { useRouter } from 'next/router';
 import { Web3Context } from '../contexts/Web3Context';
 import { errorHandler } from '../services/errorHandler';
 import { ethers } from 'ethers';
 import { toast } from 'react-hot-toast';
+import { isMobile, isMetaMaskInstalled, handleMobileConnection } from '../utils/deviceDetector';
+import { TOKEN_CONFIG } from '../config/constants';
 
 // Icons
-import { FiCopy, FiExternalLink, FiChevronDown, FiCheck, FiAlertCircle } from 'react-icons/fi';
-import { FaWallet, FaEthereum, FaExchangeAlt } from 'react-icons/fa';
+import { FiCopy, FiExternalLink, FiChevronDown, FiCheck, FiAlertCircle, FiPlusCircle } from 'react-icons/fi';
+import { FaWallet, FaExchangeAlt, FaMobileAlt, FaDesktop } from 'react-icons/fa';
 import { SiMetamask } from 'react-icons/si';
-import { BsWallet2 } from 'react-icons/bs';
 
 // UI Components
 import PetGasButton from './ui/PetGasButton';
@@ -69,6 +70,15 @@ const ConnectWalletEnhanced = ({ redirectToDashboard = false }) => {
   // Handle connect with MetaMask
   const handleConnectMetaMask = async () => {
     console.log('[ConnectWalletEnhanced] Connect MetaMask button clicked');
+    
+    // Check if mobile and handle mobile connection
+    if (isMobile()) {
+      console.log('[ConnectWalletEnhanced] Mobile device detected, handling mobile connection');
+      const handled = handleMobileConnection();
+      if (handled) return;
+    }
+    
+    // For desktop or if mobile handling didn't redirect
     setWalletType('metamask');
     await handleConnect('metamask');
   };
@@ -79,6 +89,41 @@ const ConnectWalletEnhanced = ({ redirectToDashboard = false }) => {
     setWalletType('walletconnect');
     await handleConnect('walletconnect');
   };
+
+  // Add token to MetaMask
+  const addTokenToMetaMask = useCallback(async () => {
+    if (!window.ethereum) {
+      toast.error('MetaMask is not installed');
+      return false;
+    }
+
+    try {
+      const wasAdded = await window.ethereum.request({
+        method: 'wallet_watchAsset',
+        params: {
+          type: 'ERC20',
+          options: {
+            address: TOKEN_CONFIG.PGC.MAINNET.ADDRESS,
+            symbol: TOKEN_CONFIG.PGC.SYMBOL,
+            decimals: TOKEN_CONFIG.PGC.DECIMALS,
+            image: TOKEN_CONFIG.PGC.LOGO_URI,
+          },
+        },
+      });
+
+      if (wasAdded) {
+        toast.success(`${TOKEN_CONFIG.PGC.SYMBOL} token added to MetaMask!`);
+        return true;
+      } else {
+        toast.error('User rejected the request');
+        return false;
+      }
+    } catch (error) {
+      console.error('Error adding token to MetaMask:', error);
+      toast.error(`Failed to add token: ${error.message}`);
+      return false;
+    }
+  }, []);
 
   // Generic connect handler
   const handleConnect = async (type) => {
@@ -95,6 +140,18 @@ const ConnectWalletEnhanced = ({ redirectToDashboard = false }) => {
       if (success) {
         console.log(`[ConnectWalletEnhanced] ${type} connected successfully`);
         toast.success(`Connected to ${type === 'walletconnect' ? 'WalletConnect' : 'MetaMask'}!`);
+        
+        // Add token to MetaMask after successful connection
+        if (type === 'metamask') {
+          setTimeout(() => {
+            addTokenToMetaMask().catch(console.error);
+          }, 1000);
+        }
+        
+        // Redirect to dashboard after successful connection if requested
+        if (redirectToDashboard) {
+          router.push('/dashboard');
+        }
       } else {
         console.log(`[ConnectWalletEnhanced] ${type} connection was not successful`);
         setCurrentError('Failed to connect wallet. Please try again.');
@@ -256,31 +313,49 @@ const ConnectWalletEnhanced = ({ redirectToDashboard = false }) => {
     window.open(`https://bscscan.com/address/${account}`, '_blank');
   };
 
-  // Render connect buttons
-  const renderConnectButtons = () => (
-    <div className="space-y-3 w-full">
-      {/* MetaMask Button */}
-      <button
-        onClick={handleConnectMetaMask}
-        disabled={isLoading || isConnecting || localIsConnecting}
-        className={`w-full flex items-center justify-center px-4 py-3 rounded-lg border ${
-          (isLoading || localIsConnecting) && walletType === 'metamask' 
-            ? 'bg-orange-400 border-orange-500' 
-            : 'bg-white hover:bg-gray-50 border-gray-300 hover:border-orange-400'
-        } transition-colors duration-200`}
-      >
-        <div className="flex items-center">
-          <SiMetamask className="w-5 h-5 mr-3 text-orange-500" />
-          <span className="font-medium">
-            {(isLoading || localIsConnecting) && walletType === 'metamask' ? 'Connecting...' : 'MetaMask'}
-          </span>
-          {(isLoading || localIsConnecting) && walletType === 'metamask' && (
-            <div className="ml-2 h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+  // Render connect button
+  const renderConnectButton = () => (
+    <div className="flex flex-col space-y-4 w-full">
+      <div className="relative group">
+        <PetGasButton
+          onClick={handleConnectMetaMask}
+          loading={localIsConnecting && walletType === 'metamask'}
+          disabled={isConnecting}
+          className="w-full flex items-center justify-center gap-2 group-hover:shadow-lg transition-all duration-300"
+          variant="primary"
+        >
+          <SiMetamask className="w-5 h-5" />
+          {localIsConnecting && walletType === 'metamask' 
+            ? 'Connecting...' 
+            : isMobile() 
+              ? 'Connect with MetaMask Mobile'
+              : 'Connect with MetaMask'}
+        </PetGasButton>
+        
+        {/* Device indicator */}
+        <div className="absolute -top-2 -right-2 bg-petgas-gold text-petgas-dark text-xs font-bold px-2 py-0.5 rounded-full flex items-center">
+          {isMobile() ? (
+            <>
+              <FaMobileAlt className="mr-1" /> Mobile
+            </>
+          ) : (
+            <>
+              <FaDesktop className="mr-1" /> Desktop
+            </>
           )}
         </div>
-      </button>
-      
-      {/* WalletConnect Button */}
+      </div>
+
+      {isConnected && isCorrectNetwork && (
+        <PetGasButton
+          onClick={addTokenToMetaMask}
+          className="w-full flex items-center justify-center gap-2 bg-yellow-500/10 hover:bg-yellow-500/20 text-yellow-400 border border-yellow-500/30"
+          variant="ghost"
+        >
+          <FiPlusCircle className="w-5 h-5" />
+          Add PGC to MetaMask
+        </PetGasButton>
+      )}
       <button
         onClick={handleConnectWalletConnect}
         disabled={isLoading || isConnecting || localIsConnecting}

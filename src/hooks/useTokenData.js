@@ -36,7 +36,10 @@ export const useTokenData = (options = {}) => {
   /**
    * Fetch token data
    */
-  const fetchTokenData = useCallback(async (showLoading = true) => {
+  const fetchTokenData = useCallback(async (showLoading = true, force = false) => {
+    // Skip if already loading and not forced
+    if (isLoading && !force) return;
+    
     try {
       if (showLoading) {
         setIsLoading(true);
@@ -45,16 +48,17 @@ export const useTokenData = (options = {}) => {
 
       console.log('[useTokenData] Fetching token data...');
 
-      // Determine user address for balance
-      const userAddress = includeUserBalance && isConnected && isCorrectNetwork ? account : null;
+      // Determine user address for balance only if needed
+      const shouldFetchUserBalance = includeUserBalance && isConnected && isCorrectNetwork;
+      const userAddress = shouldFetchUserBalance ? account : null;
 
-      // Fetch comprehensive token data
+      // Only fetch comprehensive data if needed
       const data = await tokenDataService.getComprehensiveTokenData(userAddress);
 
       if (isMountedRef.current) {
-        setTokenData(data);
+        setTokenData(prevData => (JSON.stringify(prevData) === JSON.stringify(data) ? prevData : data));
         setLastUpdated(new Date());
-        console.log('[useTokenData] Token data updated:', data);
+        console.log('[useTokenData] Token data updated');
       }
     } catch (err) {
       console.error('[useTokenData] Error fetching token data:', err);
@@ -66,7 +70,7 @@ export const useTokenData = (options = {}) => {
         setIsLoading(false);
       }
     }
-  }, [account, isConnected, isCorrectNetwork, includeUserBalance]);
+  }, [account, isConnected, isCorrectNetwork, includeUserBalance, isLoading]);
 
   /**
    * Refresh token data manually
@@ -126,14 +130,41 @@ export const useTokenData = (options = {}) => {
   /**
    * Set up auto-refresh interval
    */
-  const setupAutoRefresh = useCallback(() => {
-    if (autoRefresh && refreshInterval > 0) {
-      refreshIntervalRef.current = setInterval(() => {
-        console.log('[useTokenData] Auto-refreshing token data...');
-        fetchTokenData(false);
-      }, refreshInterval);
-    }
-  }, [autoRefresh, refreshInterval, fetchTokenData]);
+  useEffect(() => {
+    if (!autoRefresh) return;
+    
+    let mounted = true;
+    let refreshTimer = null;
+
+    const refreshData = async () => {
+      if (!mounted) return;
+      
+      try {
+        await fetchTokenData(false);
+      } catch (error) {
+        console.error('Error during auto-refresh:', error);
+      } finally {
+        if (mounted) {
+          refreshTimer = setTimeout(refreshData, refreshInterval);
+        }
+      }
+    };
+
+    // Initial fetch
+    fetchTokenData().then(() => {
+      if (mounted) {
+        refreshTimer = setTimeout(refreshData, refreshInterval);
+      }
+    });
+
+    // Clean up
+    return () => {
+      mounted = false;
+      if (refreshTimer) {
+        clearTimeout(refreshTimer);
+      }
+    };
+  }, [autoRefresh, fetchTokenData, refreshInterval]);
 
   /**
    * Clear auto-refresh interval
@@ -150,11 +181,7 @@ export const useTokenData = (options = {}) => {
     fetchTokenData();
   }, [fetchTokenData]);
 
-  // Set up auto-refresh
-  useEffect(() => {
-    setupAutoRefresh();
-    return clearAutoRefresh;
-  }, [setupAutoRefresh, clearAutoRefresh]);
+  // Auto-refresh is now handled in the main effect
 
   // Refresh when account or network changes
   useEffect(() => {

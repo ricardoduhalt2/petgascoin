@@ -3,7 +3,7 @@ import { useRouter } from 'next/router';
 import dynamic from 'next/dynamic';
 import { useWeb3 } from '../src/contexts/Web3Context';
 import { useTokenData } from '../src/hooks/useTokenData';
-import { useAuthRedirect } from '../src/hooks/useAuthRedirect';
+import { useAuthRedirect } from '../../src/hooks/useAuthRedirect';
 import Head from 'next/head';
 import { toast } from 'react-hot-toast';
 

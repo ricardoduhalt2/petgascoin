@@ -392,78 +392,77 @@ export const Web3Provider = ({ children }) => {
           metadata: {
             name: process.env.NEXT_PUBLIC_APP_NAME || 'PetGasCoin',
             description: process.env.NEXT_PUBLIC_APP_DESCRIPTION || 'PetGasCoin DApp',
-            url: process.env.NEXT_PUBLIC_APP_URL || 'https://petgascoin.com',
-            icons: ['https://bscscan.com/token/images/petgas_32.png?v=2'],
-          },
+            url: process.env.NEXT_PUBLIC_APP_URL || window.location.origin,
+            icons: ['https://bscscan.com/token/images/petgas_32.png']
+          }
         });
         
-        await provider.connect();
-        setConnectorType('walletconnect');
+        // Connect to the provider
+        await provider.enable();
       } else {
-        // MetaMask/Injected provider
-        const providerResult = await detectProvider();
-        
-        if (!providerResult.provider) {
-          throw new Error('MetaMask not detected. Please install MetaMask.');
+        // MetaMask or other injected provider
+        if (!window.ethereum) {
+          throw new Error('No Ethereum provider found. Please install MetaMask or use WalletConnect.');
         }
-        
-        provider = providerResult.provider;
+        provider = window.ethereum;
         
         // Request account access
         await provider.request({ method: 'eth_requestAccounts' });
-        setConnectorType('metamask');
       }
       
-      // Establish connection
-      const connectionResult = await establishConnection(provider);
+      // Establish connection with the provider
+      const connection = await establishConnection(provider);
+      setConnectorType(type);
       
-      toast.success(`Connected to ${type === 'walletconnect' ? 'WalletConnect' : 'MetaMask'}`);
+      // Store the provider in the ref
+      providerRef.current = connection.provider;
       
-      return connectionResult;
-    } catch (err) {
-      console.error('Error connecting wallet:', err);
+      console.log('[Web3Context] Connection successful:', { type });
+      return true;
+    } catch (error) {
+      console.error('[Web3Context] Connection error:', error);
       
-      // Process error with error handler
-      const processedError = errorHandlerRef.current?.handleError(err, {
-        component: 'Web3Context',
-        operation: 'connect',
-        provider: type
-      }) || { userMessage: err.message };
-      
-      setError(processedError.userMessage);
-      toast.error(`Connection failed: ${processedError.userMessage}`);
+      // Handle specific error cases
+      if (error.code === 4001 || error.code === 'ACTION_REJECTED') {
+        setError('Connection rejected by user');
+        toast.error('Connection request was rejected');
+      } else if (error.code === -32002) {
+        setError('Connection request already pending');
+        toast.error('Please check your wallet for a pending connection request');
+      } else {
+        setError(error.message || 'Failed to connect to wallet');
+        toast.error(error.message || 'Failed to connect to wallet');
+      }
       
       return false;
     } finally {
-      setIsConnecting(false);
+      // Reset connecting state with a small delay to prevent UI flicker
+      setTimeout(() => {
+        setIsConnecting(false);
+      }, 300);
     }
-  }, [isClient, establishConnection]);
+  }, [connectorType, resetState]);
 
-  // Synchronize state function
+  // Synchronize all state with the blockchain
   const synchronizeState = useCallback(async () => {
-    if (!isClient || !isConnected || !account || !providerRef.current) return;
+    if (!isClient || !isConnected) return;
     
     try {
-      console.log('[Web3Context] Synchronizing state...');
+      const currentProvider = providerRef.current;
+      if (!currentProvider) return;
       
-      // Ensure provider uses "any" network to accept chain switches
-      const current = providerRef.current;
-      const web3Provider = new ethers.providers.Web3Provider(
-        current.provider ?? current,
-        'any'
-      );
-      providerRef.current = web3Provider;
-      libraryRef.current = web3Provider;
-      signerRef.current = web3Provider.getSigner();
+      // Get network info
+      const network = await currentProvider.getNetwork();
       
-      // Update balance
-      const balanceWei = await web3Provider.getBalance(account);
-      const balanceEth = ethers.utils.formatEther(balanceWei);
+      // Get balance if account is available
+      let balanceEth = '0';
+      if (account) {
+        const balanceWei = await currentProvider.getBalance(account);
+        balanceEth = ethers.utils.formatEther(balanceWei);
+      }
+      
+      // Update state
       setBalance(balanceEth);
-      
-      // Update network info
-      const network = await web3Provider.getNetwork();
-      setChainId(network.chainId);
       setNetworkId(network.chainId.toString());
       
       const isCorrect = network.chainId === TARGET_CHAIN_ID;
@@ -477,10 +476,13 @@ export const Web3Provider = ({ children }) => {
         chainId: network.chainId,
         isCorrectNetwork: isCorrect
       });
+      
+      return true;
     } catch (err) {
       console.error('[Web3Context] Error synchronizing state:', err);
+      return false;
     }
-  }, [isClient, isConnected, account]);
+  }, [isClient, isConnected, account, setBalance, setNetworkId, setIsCorrectNetwork, setIsWrongNetwork, setNetworkName]);
 
   // Check for existing connection on page load
   const checkExistingConnection = useCallback(async () => {
@@ -505,7 +507,8 @@ export const Web3Provider = ({ children }) => {
         await establishConnection(providerResult.provider, accounts[0]);
       }
     } catch (err) {
-      console.error('Error checking existing connection:', err);
+      console.error('[Web3Context] Error checking existing connection:', err);
+      setError('Failed to check existing connection');
     } finally {
       setIsLoading(false);
     }
