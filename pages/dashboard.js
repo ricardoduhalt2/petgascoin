@@ -1,36 +1,37 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
+import dynamic from 'next/dynamic';
 import { useWeb3 } from '../src/contexts/Web3Context';
 import { useTokenData } from '../src/hooks/useTokenData';
+import { useAuthRedirect } from '../src/hooks/useAuthRedirect';
 import Head from 'next/head';
-import WalletCard from '../src/components/WalletCard';
-import TokenInfo from '../src/components/TokenInfo';
-import TokenInfoCard from '../src/components/TokenInfoCard';
-import AddToMetaMaskPetGas from '../src/components/AddToMetaMaskPetGas';
-import Chart from '../src/components/Chart';
-import ContractAddress from '../src/components/ContractAddress';
-import WalletTokenCard from '../src/components/WalletTokenCard';
-import PetGasCard from '../src/components/ui/PetGasCard';
-import PetGasText from '../src/components/ui/PetGasText';
-import PetGasLoadingScreen from '../src/components/ui/PetGasLoadingScreen';
 import { toast } from 'react-hot-toast';
+
+// Dynamically import components with no SSR to avoid hydration issues
+const WalletCard = dynamic(() => import('../src/components/WalletCard'), { ssr: false });
+const TokenInfo = dynamic(() => import('../src/components/TokenInfo'), { ssr: false });
+const TokenInfoCard = dynamic(() => import('../src/components/TokenInfoCard'), { ssr: false });
+const AddToMetaMaskPetGas = dynamic(() => import('../src/components/AddToMetaMaskPetGas'), { ssr: false });
+const Chart = dynamic(() => import('../src/components/Chart'), { ssr: false });
+const ContractAddress = dynamic(() => import('../src/components/ContractAddress'), { ssr: false });
+const WalletTokenCard = dynamic(() => import('../src/components/WalletTokenCard'), { ssr: false });
+const PetGasCard = dynamic(() => import('../src/components/ui/PetGasCard'), { ssr: false });
+const PetGasText = dynamic(() => import('../src/components/ui/PetGasText'), { ssr: false });
+const PetGasLoadingScreen = dynamic(() => import('../src/components/ui/PetGasLoadingScreen'), { ssr: false });
 
 const Dashboard = () => {
   const router = useRouter();
-  const { isConnected, account, chainId, isWrongNetwork, isCorrectNetwork } = useWeb3();
+  const { isConnected, account, chainId, isWrongNetwork, isCorrectNetwork, isConnecting } = useWeb3();
   const [isClient, setIsClient] = useState(false);
-  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   
-  // Use token data hook to fetch real data
-  const {
-    tokenData,
-    tokenInfo,
-    priceData,
-    userBalanceFormatted,
-    hasUserBalance,
-    isLoading: tokenDataLoading,
+  // Use the auth redirect hook
+  const { isCheckingAuth } = useAuthRedirect(isConnected, isConnecting);
+  
+  // Get token data
+  const { 
+    tokenInfo, 
+    isLoading: isLoadingTokenData, 
     error: tokenDataError,
-    refreshTokenData,
     lastUpdated
   } = useTokenData({
     autoRefresh: true,
@@ -39,42 +40,28 @@ const Dashboard = () => {
     includeTransfers: true,
     includeHolders: true
   });
-
-  // Ensure we're on the client side before rendering Web3 components
+  
+  // Set client-side flag on mount
   useEffect(() => {
     setIsClient(true);
-  }, []);
-
-  // Route protection: redirect to home if not connected
-  useEffect(() => {
-    if (isClient) {
-      // Give some time for Web3 context to initialize
-      const timer = setTimeout(() => {
-        if (!isConnected) {
-          toast.error('Please connect your wallet to access the dashboard', { duration: 4000 });
-          router.push('/');
-        } else {
-          setIsCheckingAuth(false);
-        }
-      }, 1000);
-
-      return () => clearTimeout(timer);
+    
+    // Check for redirect after login
+    const redirectPath = sessionStorage.getItem('redirectAfterLogin');
+    if (isConnected && redirectPath) {
+      sessionStorage.removeItem('redirectAfterLogin');
+      router.push(redirectPath).catch(() => {
+        // Fallback in case of error
+        window.location.href = redirectPath;
+      });
     }
-  }, [isClient, isConnected, router]);
-
-  // Update auth checking state when connection changes
-  useEffect(() => {
-    if (isClient && isConnected) {
-      setIsCheckingAuth(false);
-    }
-  }, [isClient, isConnected]);
+  }, [isConnected, router]);
 
   // Show toast when token data updates
   useEffect(() => {
-    if (lastUpdated && !tokenDataLoading && !tokenDataError) {
+    if (tokenInfo && !isLoadingTokenData && !tokenDataError) {
       toast.success('Token data updated', { duration: 2000 });
     }
-  }, [lastUpdated, tokenDataLoading, tokenDataError]);
+  }, [lastUpdated, isLoadingTokenData, tokenDataError]);
 
   // Show error toast if token data fails to load
   useEffect(() => {
@@ -100,26 +87,24 @@ const Dashboard = () => {
     bscScanUrl: tokenInfo.bscScanUrl || fallbackTokenInfo.bscScanUrl
   } : fallbackTokenInfo;
 
-  // Show loading screen while checking client-side or authentication
-  if (!isClient || isCheckingAuth) {
-    // Evita quedarse colgado en la pantalla de carga: renderiza contenedor mínimo y no bloquea el estado
+  // Show loading state while checking auth or if not on client side
+  if (isCheckingAuth || typeof window === 'undefined') {
     return (
-      <div className="min-h-screen bg-pgc-dark text-pgc-text flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-yellow-400 mx-auto mb-3"></div>
-          <div className="text-sm text-petgas-text-gray">Connecting to the blockchain...</div>
-        </div>
+      <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center">
+        <PetGasLoadingScreen />
       </div>
     );
   }
-
-  // If not connected, this will be handled by the useEffect redirect
+  
+  // If not connected, show loading state while redirecting
   if (!isConnected) {
     return (
-      <PetGasLoadingScreen 
-        message="Redirecting to login..."
-        subMessage="Please connect your wallet to continue"
-      />
+      <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-xl mb-4">Redirecting to home page...</p>
+          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-yellow-400 mx-auto"></div>
+        </div>
+      </div>
     );
   }
 
@@ -206,7 +191,7 @@ const Dashboard = () => {
                   </div>
                 </div>
                 <span className="ml-3 text-xs font-bold text-pgc-black px-2 py-1 rounded-full border" style={{ background: 'linear-gradient(135deg,#E5B80B,#FACC15)', borderColor: '#FACC15' }}>
-                  V1.2
+                  V1.4
                 </span>
               </div>
             </div>
@@ -217,7 +202,7 @@ const Dashboard = () => {
                   <div className="text-xl font-bold text-white">
                     {tokenInfo?.totalSupply ? 
                       `${parseFloat(tokenInfo.totalSupply).toLocaleString()} ${displayTokenInfo.symbol}` : 
-                      tokenDataLoading ? 'Loading...' : '330,000,000,000 PGC'
+                      isLoadingTokenData ? 'Loading...' : '330,000,000,000 PGC'
                     }
                   </div>
                 </div>

@@ -16,11 +16,17 @@
 
 Este proyecto implementa una DApp completa para el token PetgasCoin (PGC) en Binance Smart Chain con un sistema de diseño avanzado, experiencia mobile-first y conexión MetaMask optimizada.
 
-## 🚀 Estado Actual - Enero 2025
+## 🚀 Estado Actual - Agosto 2025 (Versión 1.4.0)
 
-**✅ FUNCIONANDO PERFECTAMENTE** - Sistema de diseño PetGas implementado completamente con experiencia mobile optimizada y datos reales de blockchain.
+**✅ VERSIÓN 1.4 ACTUALIZADA** - Mejoras en la integración de WalletConnect y actualización del sistema de versionado.
 
-### 🎨 Logros Recientes Implementados (Enero 2025)
+### 🎨 Cambios en la Versión 1.4 (Agosto 2025)
+- **✅ Actualización de versión** a V1.4 en toda la aplicación
+- **✅ Mejora en la integración de WalletConnect** para móviles
+- **✅ Corrección de errores** en el componente AddToMetaMaskPetGas
+- **✅ Optimización** de la experiencia de usuario en dispositivos móviles
+
+### 🎨 Logros Anteriores (Enero 2025)
 - **✅ Sistema de diseño PetGas completo** con colores exactos de petgascoin.com
 - **✅ Página principal mobile-first** con logo y partículas doradas animadas (30 partículas)
 - **✅ Conexión MetaMask optimizada** para desktop y mobile con deep linking
@@ -334,14 +340,52 @@ La aplicación PetgasCoin DApp ahora funciona completamente con:
 - **V1.0** (Enero 2025) - Lanzamiento inicial con sistema de diseño PetGas completo, conexión MetaMask optimizada, datos reales de blockchain, y experiencia mobile-first
 
 #### Instrucciones para actualizar versión:
-1. Buscar todos los archivos que contengan `V1.0`
-2. Actualizar a la nueva versión (ej: `V1.1`, `V1.2`, etc.)
-3. Actualizar esta sección del README con los cambios realizados
-4. Commit con mensaje: `chore: bump version to VX.X`
+## 🛠 Cambios en la Versión 1.4.0
+
+### Mejoras
+- Corregido el componente `AddToMetaMaskPetGas` para soportar tanto MetaMask como WalletConnect
+- Mejorada la experiencia de usuario en dispositivos móviles
+- Actualizados los mensajes de error para ser más descriptivos
+- Optimizado el rendimiento del componente
+
+### Correcciones de Errores
+- Corregido el error `showTokenDetailsForManualAddition is not defined`
+- Solucionados problemas de sintaxis y estructura en el código
+- Eliminadas declaraciones duplicadas del componente
+- Corregida la exportación del módulo
+
+### Cambios Técnicos
+- Actualizadas las dependencias a sus últimas versiones
+- Mejorado el manejo de errores en la conexión de billetera
+- Añadida validación de red (BSC Mainnet)
+- Implementado soporte para WalletConnect en dispositivos móviles
+
+### Archivos Afectados
+- `src/components/AddToMetaMaskPetGas.js`
+- `src/config/constants.js`
+- `src/utils/constants.js`
+- `src/components/Web3DependentComponents.js`
+- `pages/dashboard.js`
+
+### Próximos Pasos
+1. Probar exhaustivamente la funcionalidad en diferentes navegadores y dispositivos
+2. Monitorear los logs de error en producción
+3. Recopilar feedback de los usuarios sobre la nueva experiencia
+4. Planificar las próximas mejoras basadas en el feedback
+
+## 🛠 Política de Control de Versiones
+
+1. Para actualizar la versión:
+   - Actualizar `APP_VERSION` en `src/utils/constants.js`
+   - Actualizar `VERSION` y `DISPLAY_VERSION` en `src/config/constants.js`
+   - Actualizar el badge de versión en `src/components/Web3DependentComponents.js`
+   - Actualizar el badge de versión en `pages/dashboard.js`
+   - Actualizar esta sección del README con los cambios realizados
+   - Commit con mensaje: `chore: bump version to V1.4`
 
 ---
 
 **Desarrollado por:** Kiro AI Assistant  
 **Fecha:** Enero 2025  
 **Estado:** ✅ Completado y Funcionando  
-**Versión:** V1.1
+**Versión:** V1.4

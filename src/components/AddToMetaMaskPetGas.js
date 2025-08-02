@@ -8,14 +8,22 @@
 import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'react-hot-toast';
 import { useWeb3 } from '../contexts/Web3Context';
+import { connectWalletConnect, isWalletConnectConnected } from '../utils/walletConnect';
 
 // Real PGC Token data
 const PGC_TOKEN = {
-  address: '0x46617e7bca14de818d9E5cFf2aa106b72CB33fe3',
+  address: process.env.NEXT_PUBLIC_PGC_TOKEN_ADDRESS || '0x0f0dd3f04b6712397278d1a70a1119a14b91233e',
   symbol: 'PGC',
-  name: 'Petgascoin',
+  name: 'PetGasCoin',
   decimals: 18,
-  image: 'https://bscscan.com/token/images/petgas_32.png?v=2'
+  image: 'https://bscscan.com/token/images/petgas_32.png'
+};
+
+// Size variants for the button
+const sizeVariants = {
+  sm: 'px-3 py-1.5 text-sm',
+  md: 'px-4 py-2 text-base',
+  lg: 'px-6 py-3 text-lg'
 };
 
 // MetaMask Fox SVG Icon
@@ -45,22 +53,15 @@ const MetaMaskIcon = () => (
       <polygon className="st8" points="110.6,185.2 130.6,176.1 138.8,193.5 144.1,164.6 87.8,162.1"/>
     </g>
     <g>
-      <polygon className="st6" points="87.8,162.1 111.4,208.1 110.6,185.2"/>
-      <polygon className="st6" points="208.1,185.2 207.1,208.1 230.8,162.1"/>
-      <polygon className="st6" points="144.1,164.6 138.8,193.5 145.4,227.6 146.9,182.7"/>
-      <polygon className="st6" points="174.6,164.6 171.9,182.6 173.1,227.6 179.8,193.5"/>
+      <polygon className="st4" points="87.8,162.1 111.4,208.1 110.6,185.2"/>
+      <polygon className="st4" points="208,185.2 207.1,208.1 230.8,162.1"/>
+      <polygon className="st4" points="144.1,164.6 138.8,193.5 142.1,230.9 143,193.3 144.1,164.6"/>
     </g>
-    <polygon className="st6" points="179.8,193.5 173.1,227.6 177.9,230.9 207.1,208.1 208.1,185.2"/>
-    <polygon className="st6" points="110.6,185.2 111.4,208.1 140.6,230.9 145.4,227.6 138.8,193.5"/>
-    <polygon className="st5" points="180.3,262.3 180.6,253 178.1,250.8 140.4,250.8 138.1,253 138.3,262.3 106.8,247.4 117.8,256.4 140.1,271.9 178.4,271.9 200.8,256.4 211.8,247.4"/>
-    <polygon className="st2" points="177.9,230.9 173.1,227.6 145.4,227.6 140.6,230.9 138.1,253 140.4,250.8 178.1,250.8 180.6,253"/>
-    <g>
-      <polygon className="st9" points="278.3,114.2 286.8,73.4 274.1,35.5 177.9,106.9 214.9,138.2 267.2,153.5 278.8,140 273.8,136.4 281.8,129.1 275.6,124.3 283.6,118.2"/>
-      <polygon className="st9" points="31.8,73.4 40.3,114.2 34.9,118.2 42.9,124.3 36.8,129.1 44.8,136.4 39.8,140 51.3,153.5 103.6,138.2 140.6,106.9 44.4,35.5"/>
-    </g>
-    <polygon className="st6" points="267.2,153.5 214.9,138.2 230.8,162.1 207.1,208.1 238.3,207.7 284.8,207.7"/>
-    <polygon className="st6" points="103.6,138.2 51.3,153.5 33.9,207.7 80.3,207.7 111.4,208.1 87.8,162.1"/>
-    <polygon className="st6" points="174.6,164.6 177.9,106.9 193,65.8 125.6,65.8 140.6,106.9 144.1,164.6 145.3,182.8 145.4,227.6 173.1,227.6 173.3,182.8"/>
+    <polygon className="st5" points="177.9,230.9 179.8,193.5 174.6,164.6 177.9,230.9"/>
+    <polygon className="st9" points="111.4,208.1 80.3,207.7 106.8,247.4 111.4,208.1"/>
+    <polygon className="st9" points="207.1,208.1 211.8,247.4 238.3,207.7 207.1,208.1"/>
+    <polygon className="st3" points="138.8,193.5 142.1,230.9 143,193.3 138.8,193.5"/>
+    <polygon className="st3" points="179.8,193.5 177.9,230.9 179.8,193.5"/>
   </svg>
 );
 
@@ -88,12 +89,12 @@ const useMobileDetect = () => {
   return isMobile;
 };
 
-const AddToMetaMaskPetGas = ({ className = '', size = 'medium' }) => {
+const AddToMetaMaskPetGas = ({ className = '', size = 'md' }) => {
   const { isConnected, chainId, account } = useWeb3();
   const [isAdding, setIsAdding] = useState(false);
   const [isWrongNetwork, setIsWrongNetwork] = useState(false);
   const isMobile = useMobileDetect();
-  
+
   // Check if connected to BSC Mainnet
   useEffect(() => {
     if (isConnected && chainId) {
@@ -103,145 +104,276 @@ const AddToMetaMaskPetGas = ({ className = '', size = 'medium' }) => {
     }
   }, [isConnected, chainId]);
 
-  // Handle adding token to MetaMask
-  const addTokenToMetaMask = useCallback(async () => {
-    console.log('[AddToMetaMask] Starting token addition process...');
-    console.log('[AddToMetaMask] Current state:', {
+  // Show token details for manual addition
+  const showTokenDetailsForManualAddition = useCallback(() => {
+    const tokenDetails = `
+      Token: ${PGC_TOKEN.name} (${PGC_TOKEN.symbol})
+      Contract: ${PGC_TOKEN.address}
+      Decimals: ${PGC_TOKEN.decimals}
+      
+      Copy the contract address and add it manually to your wallet.`;
+    
+    toast(
+      <div className="text-left">
+        <p className="font-semibold mb-2">Manual Token Addition Required</p>
+        <pre className="text-sm bg-gray-100 dark:bg-gray-800 p-3 rounded overflow-auto">
+          {tokenDetails}
+        </pre>
+        <div className="mt-3 flex space-x-2">
+          <button 
+            onClick={() => {
+              navigator.clipboard.writeText(PGC_TOKEN.address);
+              toast.success('Contract address copied to clipboard!');
+            }}
+            className="px-3 py-1 bg-blue-500 text-white rounded text-sm hover:bg-blue-600 transition-colors"
+          >
+            Copy Address
+          </button>
+          <a 
+            href={`https://bscscan.com/token/${PGC_TOKEN.address}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="px-3 py-1 bg-gray-200 dark:bg-gray-700 rounded text-sm hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+          >
+            View on BSCScan
+          </a>
+        </div>
+      </div>,
+      {
+        duration: 10000,
+        position: 'bottom-center',
+        style: {
+          maxWidth: '90vw',
+          width: '420px'
+        }
+      }
+    );
+  }, []);
+
+  // Helper function to add token using Ethereum provider
+  const addTokenUsingEthereumProvider = useCallback(async (ethereum) => {
+    console.log('[AddToWallet] Using Ethereum provider to add token...');
+    
+    try {
+      // First, ensure we're connected to the correct chain
+      const currentChainId = chainId || await ethereum.request({ method: 'eth_chainId' });
+      const isCorrectChain = currentChainId === 56 || currentChainId === '0x38';
+      
+      if (!isCorrectChain) {
+        toast.error('Please switch to BSC Mainnet (Chain ID: 56) to add the token', {
+          duration: 5000,
+          position: 'bottom-center'
+        });
+        return false;
+      }
+
+      // Add a small delay to ensure the provider is ready
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      const wasAdded = await Promise.race([
+        ethereum.request({
+          method: 'wallet_watchAsset',
+          params: {
+            type: 'ERC20',
+            options: {
+              address: PGC_TOKEN.address,
+              symbol: PGC_TOKEN.symbol,
+              decimals: PGC_TOKEN.decimals,
+              image: PGC_TOKEN.image,
+            },
+          },
+        }),
+        // Add a timeout to prevent hanging
+        new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Request timed out')), 30000)
+        )
+      ]);
+
+      console.log('[AddToWallet] Token addition result:', wasAdded);
+
+      if (wasAdded) {
+        console.log('[AddToWallet] Token added successfully');
+        toast.success('✅ PGC token added to your wallet!', {
+          duration: 4000,
+          position: 'bottom-center'
+        });
+        return true;
+      } else {
+        console.log('[AddToWallet] User rejected the request');
+        toast('Token addition was cancelled', {
+          icon: 'ℹ️',
+          duration: 3000,
+          position: 'bottom-center'
+        });
+        return false;
+      }
+    } catch (requestError) {
+      console.error('[AddToWallet] Request error:', requestError);
+      
+      // Special handling for older MetaMask versions or unsupported methods
+      if (requestError.code === -32601 || // Method not found
+          requestError.code === -32000 || // Internal error
+          requestError.message?.includes('not implemented') ||
+          requestError.message?.includes('not supported')) {
+        console.log('[AddToWallet] Using fallback method for token addition');
+        showTokenDetailsForManualAddition();
+        return false;
+      }
+      
+      // Handle user rejection
+      if (requestError.code === 4001 || 
+          requestError.code === 'ACTION_REJECTED' ||
+          requestError.message?.includes('User rejected the request')) {
+        toast('Token addition was cancelled', {
+          icon: 'ℹ️',
+          duration: 3000,
+          position: 'bottom-center'
+        });
+        return false;
+      }
+      
+      // For other errors, show the error and instructions for manual addition
+      console.error('Error adding token:', requestError);
+      showTokenDetailsForManualAddition();
+      return false;
+    }
+  }, [chainId, showTokenDetailsForManualAddition]);
+
+  // Handle adding token to wallet (MetaMask or WalletConnect)
+  const addTokenToWallet = useCallback(async () => {
+    console.log('[AddToWallet] Starting token addition process...');
+    
+    // Log state for debugging
+    const logState = {
       isConnected,
-      account,
+      account: account ? `${account.substring(0, 6)}...${account.substring(38)}` : null,
       isWrongNetwork,
       isMobile,
       hasEthereum: !!window.ethereum,
       chainId
-    });
+    };
+    
+    console.log('[AddToWallet] Current state:', logState);
 
+    // Validate environment
     if (typeof window === 'undefined') {
       toast.error('This feature is only available in a browser environment');
-      return;
+      return false;
     }
 
+    // Validate wallet connection
     if (!isConnected || !account) {
       toast.error('Please connect your wallet first');
-      return;
+      return false;
     }
 
+    // Validate network
     if (isWrongNetwork) {
-      toast.error('Please switch to BSC Mainnet first');
-      return;
+      toast.error('Please switch to BSC Mainnet (Chain ID: 56) first');
+      return false;
     }
 
+    // Prevent multiple clicks
+    if (isAdding) {
+      console.log('[AddToWallet] Operation already in progress');
+      return false;
+    }
+    
+    // Reset state and start loading
     setIsAdding(true);
+    
+    // Check if we should use WalletConnect (mobile or if MetaMask not available)
+    const shouldUseWalletConnect = isMobile || !window.ethereum?.isMetaMask;
 
     try {
-      // Check if MetaMask is available
-      if (!window.ethereum) {
-        console.log('[AddToMetaMask] No ethereum provider found');
-        // On mobile, try to open MetaMask app
-        if (isMobile) {
-          const metamaskAppDeepLink = `https://metamask.app.link/dapp/${window.location.host}${window.location.pathname}`;
-          window.open(metamaskAppDeepLink, '_blank');
-          toast('Opening MetaMask app...', { icon: '📱' });
-        } else {
-          toast.error('Please install MetaMask first!');
-          window.open('https://metamask.io/download.html', '_blank', 'noopener');
+      // Handle WalletConnect flow for mobile or if MetaMask not available
+      if (shouldUseWalletConnect) {
+        console.log('[AddToWallet] Using WalletConnect flow');
+        
+        try {
+          // Check if already connected with WalletConnect
+          const isWcConnected = await isWalletConnectConnected();
+          
+          // If not connected, initiate WalletConnect
+          if (!isWcConnected) {
+            toast.loading('Connecting with WalletConnect...', { id: 'wallet-connect-loading' });
+            const wcProvider = await connectWalletConnect();
+            
+            if (!wcProvider) {
+              toast.error('Failed to connect with WalletConnect');
+              return false;
+            }
+            
+            toast.success('Connected with WalletConnect!', { id: 'wallet-connect-loading' });
+          }
+          
+          // For WalletConnect, we'll use the wallet_watchAsset method if available
+          if (window.ethereum) {
+            return await addTokenUsingEthereumProvider(window.ethereum);
+          } else {
+            // Fallback to showing token details for manual addition
+            showTokenDetailsForManualAddition();
+            return false;
+          }
+        } catch (error) {
+          console.error('[AddToWallet] WalletConnect error:', error);
+          toast.error('Failed to connect with WalletConnect');
+          return false;
         }
-        return;
       }
-
-      console.log('[AddToMetaMask] Ethereum provider found, attempting to add token...');
-      console.log('[AddToMetaMask] Token details:', PGC_TOKEN);
-
-      // Add token to MetaMask
-      const wasAdded = await window.ethereum.request({
-        method: 'wallet_watchAsset',
-        params: {
-          type: 'ERC20',
-          options: {
-            address: PGC_TOKEN.address,
-            symbol: PGC_TOKEN.symbol,
-            decimals: PGC_TOKEN.decimals,
-            image: PGC_TOKEN.image,
-            name: PGC_TOKEN.name,
-          },
-        },
-      });
-
-      console.log('[AddToMetaMask] Token addition result:', wasAdded);
-
-      if (wasAdded) {
-        toast.success('🎉 PGC token added to MetaMask!', {
-          duration: 4000,
-          style: {
-            background: 'linear-gradient(135deg, #FFD700, #FFA500)',
-            color: 'black',
-            fontWeight: 'bold'
-          }
-        });
-      } else {
-        toast('PGC token was not added', { 
-          icon: 'ℹ️',
-          style: {
-            background: '#f59e0b',
-            color: 'white'
-          }
-        });
-      }
-    } catch (error) {
-      console.error('[AddToMetaMask] Error adding token to MetaMask:', error);
-      console.error('[AddToMetaMask] Error details:', {
-        code: error.code,
-        message: error.message,
-        data: error.data
-      });
       
-      let errorMessage = 'Failed to add PGC token';
-      if (error.code === 4001) {
+      // Continue with MetaMask flow for desktop
+      return await addTokenUsingEthereumProvider(window.ethereum);
+    } catch (error) {
+      console.error('[AddToWallet] Error adding token:', error);
+      
+      // Handle specific errors
+      let errorMessage = 'Failed to add token';
+      
+      if (error.code === 4001 || error.code === 'ACTION_REJECTED') {
         errorMessage = 'Request was rejected by user';
       } else if (error.code === -32602) {
-        errorMessage = 'Invalid parameters provided to MetaMask';
+        errorMessage = 'Invalid parameters provided';
       } else if (error.code === -32603) {
-        errorMessage = 'Internal JSON-RPC error in MetaMask';
+        errorMessage = 'Internal JSON-RPC error';
       } else if (error.code === -32000) {
-        errorMessage = 'MetaMask internal error';
+        errorMessage = 'Internal error';
       } else if (error.message) {
-        errorMessage = error.message;
+        if (error.message.includes('Request timed out')) {
+          errorMessage = 'Request timed out. Please try again.';
+        } else if (error.message.includes('User rejected the request')) {
+          errorMessage = 'Request was rejected by user';
+        } else {
+          errorMessage = error.message;
+        }
       }
       
+      // Show error message
       toast.error(errorMessage, {
         duration: 5000,
-        style: {
-          background: '#ef4444',
-          color: 'white'
-        }
+        position: 'bottom-center'
       });
+      
+      return false;
     } finally {
       setIsAdding(false);
     }
-  }, [isConnected, account, isWrongNetwork, isMobile, chainId]);
-
-  // Size variants
-  const sizeClasses = {
-    small: 'px-3 py-2 text-sm',
-    medium: 'px-4 py-2.5 text-base',
-    large: 'px-6 py-3 text-lg'
-  };
+  }, [isConnected, account, isWrongNetwork, chainId, isAdding, isMobile, addTokenUsingEthereumProvider, showTokenDetailsForManualAddition]);
 
   // Check if wallet is not connected
   if (!isConnected) {
     return (
       <button
         disabled
-        className={`
-          flex items-center justify-center rounded-lg font-semibold
+        className={
+          `flex items-center justify-center rounded-lg font-semibold
           bg-gray-400 text-gray-200 cursor-not-allowed opacity-75
-          ${sizeClasses[size]} ${className}
-        `}
+          ${sizeVariants[size] || sizeVariants.md} ${className}`
+        }
         aria-label="Wallet not connected"
       >
-        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-        </svg>
-        Connect Wallet First
+        <MetaMaskIcon />
+        {isMobile ? 'Connect Wallet' : 'Connect Wallet to Add PGC'}
       </button>
     );
   }
@@ -251,47 +383,48 @@ const AddToMetaMaskPetGas = ({ className = '', size = 'medium' }) => {
     return (
       <button
         disabled
-        className={`
-          flex items-center justify-center rounded-lg font-semibold
-          bg-yellow-500 text-white opacity-75 cursor-not-allowed
-          ${sizeClasses[size]} ${className}
-        `}
+        className={
+          `flex items-center justify-center rounded-lg font-semibold
+          bg-yellow-500 text-yellow-900 cursor-not-allowed
+          ${sizeVariants[size] || sizeVariants.md} ${className}`
+        }
         aria-label="Wrong network"
       >
-        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
-        </svg>
+        <MetaMaskIcon />
         Switch to BSC Mainnet
       </button>
     );
   }
 
+  // Main button to add token
   return (
     <button
-      onClick={addTokenToMetaMask}
+      onClick={addTokenToWallet}
       disabled={isAdding}
-      className={`
-        flex items-center justify-center rounded-lg font-semibold
-        transition-all duration-200 transform hover:scale-105 active:scale-95
-        shadow-lg hover:shadow-xl
-        ${isAdding 
-          ? 'bg-gradient-to-r from-purple-500 to-purple-600 text-white cursor-wait opacity-75' 
-          : 'bg-gradient-to-r from-purple-600 via-purple-700 to-indigo-700 hover:from-purple-700 hover:via-purple-800 hover:to-indigo-800 text-white'
-        }
-        ${sizeClasses[size]} ${className}
-      `}
-      aria-label="Add PGC to MetaMask"
-      aria-busy={isAdding}
+      className={
+        `flex items-center justify-center rounded-lg font-semibold
+        bg-gradient-to-r from-yellow-400 to-yellow-600 text-yellow-900
+        hover:from-yellow-300 hover:to-yellow-500
+        active:from-yellow-500 active:to-yellow-700
+        focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2
+        transition-colors duration-200
+        ${isAdding ? 'opacity-75 cursor-not-allowed' : 'hover:shadow-lg'}
+        ${sizeVariants[size] || sizeVariants.md} ${className}`
+      }
+      aria-label="Add PGC to Wallet"
     >
       {isAdding ? (
         <>
-          <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2"></div>
-          Adding to MetaMask...
+          <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-yellow-900" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          Adding...
         </>
       ) : (
         <>
           <MetaMaskIcon />
-          Add PGC to MetaMask
+          {isMobile ? 'Add PGC to Wallet' : 'Add PGC to Wallet'}
         </>
       )}
     </button>

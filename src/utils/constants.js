@@ -2,6 +2,9 @@
  * Application constants and configuration
  */
 
+// Application Version
+export const APP_VERSION = '1.4.0';
+
 // PGC Token Metadata
 export const PGC_TOKEN_METADATA = {
   address: process.env.NEXT_PUBLIC_PGC_TOKEN_CONTRACT || '0x46617e7bca14de818d9E5cFf2aa106b72CB33fe3',
